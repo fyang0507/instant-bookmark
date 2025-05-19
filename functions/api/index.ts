@@ -22,7 +22,18 @@ export default {
   async fetch(
     request: CfRequest, 
     env: MyWorkerEnv
+    // Consider adding ctx: ExecutionContext if you need it for other purposes
   ): Promise<Response> { 
+    console.log("[Worker] Fetch handler invoked.");
+    console.log("[Worker] env object keys:", Object.keys(env).join(', '));
+    console.log("[Worker] typeof env.__STATIC_CONTENT:", typeof env.__STATIC_CONTENT);
+    if (env.__STATIC_CONTENT) {
+      console.log("[Worker] env.__STATIC_CONTENT object keys (if object):", typeof env.__STATIC_CONTENT === 'object' && env.__STATIC_CONTENT !== null ? Object.keys(env.__STATIC_CONTENT).join(', ') : 'Not an object or null');
+      console.log("[Worker] env.__STATIC_CONTENT.fetch exists:", typeof env.__STATIC_CONTENT.fetch === 'function');
+    } else {
+      console.log("[Worker] env.__STATIC_CONTENT is null or undefined.");
+    }
+
     const url = new URL(request.url);
     console.log(`[Worker] Request received for: ${request.url}, Pathname: ${url.pathname}`);
 
