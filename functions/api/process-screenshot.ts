@@ -1,4 +1,4 @@
-import type { PagesFunction, EventContext } from '@cloudflare/workers-types';
+import type { PagesFunction, EventContext, Request as CfRequest } from '@cloudflare/workers-types';
 
 // Define the expected response format
 interface ProcessedContentResponse {
@@ -14,8 +14,11 @@ export interface Env {
   // OPENAI_API_KEY etc. if needed
 }
 
-export const onRequestPost = (async (context: EventContext<Env, string, unknown>) => {
-  const { request, env } = context;
+// New handler for standard Worker signature, accepting CfRequest, no ctx
+export async function handleProcessScreenshotPost(
+  request: CfRequest,
+  env: Env
+): Promise<Response> {
   const notionVersion = '2022-06-28'; // Standard Notion API version
 
   try {
@@ -36,20 +39,17 @@ export const onRequestPost = (async (context: EventContext<Env, string, unknown>
       const formData = await request.formData();
       const fileValue = formData.get('file'); // Use a different name to avoid conflict with global File
       
-      // Check if fileValue exists, is not a string, and has file-like properties
       if (!fileValue || typeof fileValue === 'string' || 
           typeof (fileValue as File).name === 'undefined' || 
           typeof (fileValue as File).size === 'undefined') { 
         return new Response('Missing or invalid \'file\' in FormData', { status: 400 });
       }
       
-      // If the checks pass, we can be reasonably sure it's a File object for Cloudflare Workers
       const file = fileValue as File;
       
-      // --- Notion File Upload: Step 1 - Create File Upload --- 
       const createUploadPayload = {
         name: file.name,
-        mime_type: file.type || 'application/octet-stream', // Provide a default MIME type
+        mime_type: file.type || 'application/octet-stream',
         mode: 'single_part',
       };
 
@@ -71,9 +71,9 @@ export const onRequestPost = (async (context: EventContext<Env, string, unknown>
         return new Response(`Failed to initiate screenshot upload with Notion: ${errorText}`, { status: createUploadResponse.status });
       }
 
-      const uploadData = await createUploadResponse.json() as { id: string; url: string; [key: string]: any };
+      const uploadData = await createUploadResponse.json() as { id: string; upload_url: string; [key: string]: unknown };
       const uploadId = uploadData.id;
-      const sendUrl = uploadData.url; // This is the URL to send the file bytes to
+      const sendUrl = uploadData.upload_url;
 
       if (!uploadId || !sendUrl) {
         console.error('[process-screenshot] Notion create file upload response missing id or url:', uploadData);
@@ -82,18 +82,16 @@ export const onRequestPost = (async (context: EventContext<Env, string, unknown>
 
       console.log(`[process-screenshot] Step 1 successful. Upload ID: ${uploadId}, Send URL: ${sendUrl}`);
 
-      // --- Notion File Upload: Step 2 - Send File Bytes --- 
       const fileFormData = new FormData();
       fileFormData.append('file', file, file.name);
 
       console.log(`[process-screenshot] Step 2: Sending file bytes for ${file.name} to ${sendUrl}...`);
 
-      const sendFileResponse = await fetch(sendUrl, { // Use the URL from Step 1 response
+      const sendFileResponse = await fetch(sendUrl, {
         method: 'POST',
         headers: {
-          // Notion docs say to use multipart/form-data, and fetch handles Content-Type for FormData.
-          // Crucially, for this specific endpoint, Notion docs DO NOT specify Notion-Version or Authorization headers.
-          // This is unusual but we follow the docs for the specific endpoint: https://developers.notion.com/reference/send-a-file-upload
+          'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+          'Notion-Version': notionVersion,
         },
         body: fileFormData,
       });
@@ -101,17 +99,10 @@ export const onRequestPost = (async (context: EventContext<Env, string, unknown>
       if (!sendFileResponse.ok) {
         const errorText = await sendFileResponse.text();
         console.error('[process-screenshot] Notion send file bytes failed:', sendFileResponse.status, errorText);
-        // It might be useful to try and complete the upload with Notion if possible, or handle cleanup.
-        // For now, return an error.
         return new Response(`Failed to send screenshot data to Notion: ${errorText}`, { status: sendFileResponse.status });
       }
       
       console.log(`[process-screenshot] Step 2 successful. File bytes sent for ${uploadId}.`);
-
-      // --- Notion File Upload: Step 3 (Complete) is not done here. --- 
-      // The Python example calls a /complete endpoint, but the Send a file upload doc doesn't show it.
-      // The Python code directly appends the block using the upload_id from step 1.
-      // We will return the uploadId to the client, and the /save-to-notion function will append the block.
 
       const dummyTitle = "Processed Screenshot"; 
       const dummySummary = "THIS IS A TEST SCREENSHOT SUMMARY";
@@ -119,7 +110,7 @@ export const onRequestPost = (async (context: EventContext<Env, string, unknown>
       const responseBody: ProcessedContentResponse = {
         title: dummyTitle,
         summary: dummySummary,
-        uploadId: uploadId, // Return the uploadId
+        uploadId: uploadId,
       };
 
       return new Response(JSON.stringify(responseBody), {
@@ -148,6 +139,11 @@ export const onRequestPost = (async (context: EventContext<Env, string, unknown>
     }
     return new Response(errorMessage, { status: 500 });
   }
+}
+
+export const onRequestPost = (async (context: EventContext<Env, string, unknown>) => {
+  // Call worker-style handler, no ctx needed for handleProcessScreenshotPost
+  return handleProcessScreenshotPost(context.request, context.env);
 }) as unknown as PagesFunction<Env>;
 
 // Fallback for other methods (GET, PUT, DELETE etc.)

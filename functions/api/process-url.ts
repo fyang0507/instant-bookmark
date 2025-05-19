@@ -1,4 +1,4 @@
-import type { PagesFunction, EventContext } from '@cloudflare/workers-types';
+import type { PagesFunction, EventContext, Request as CfRequest } from '@cloudflare/workers-types';
 
 // Define the expected request body for URL processing
 interface ProcessUrlRequest {
@@ -17,8 +17,11 @@ export interface Env {
   // Add other secrets like OPENAI_API_KEY if the real implementation needs them
 }
 
-export const onRequestPost = (async (context: EventContext<Env, string, unknown>) => {
-  const { request, env } = context;
+// New handler for standard Worker signature, accepting CfRequest, no ctx
+export async function handleProcessUrlPost(
+  request: CfRequest, 
+  env: Env
+): Promise<Response> {
   try {
     // API Key Authentication
     const clientApiKey = request.headers.get('X-API-Key');
@@ -72,9 +75,13 @@ export const onRequestPost = (async (context: EventContext<Env, string, unknown>
     } else if (typeof error === 'string') {
         errorMessage = error;
     }
-    // Could add more specific error handling here if needed
     return new Response(errorMessage, { status: 500 });
   }
+}
+
+export const onRequestPost = (async (context: EventContext<Env, string, unknown>) => {
+  // This Pages Function can now call the new worker-style handler, no ctx needed for handleProcessUrlPost
+  return handleProcessUrlPost(context.request, context.env); 
 }) as unknown as PagesFunction<Env>;
 
 // Fallback for other methods (GET, PUT, DELETE etc.)
@@ -88,7 +95,5 @@ export const onRequest = (async (context: EventContext<Env, string, unknown>) =>
     }
     return new Response(`Method ${request.method} Not Allowed`, { status: 405, headers: { 'Allow': 'POST' } });
   }
-  // For POST requests, onRequestPost should be called. If we reach here for POST, it's likely a configuration issue.
-  // Or, if you want POST requests to only be handled by onRequestPost, this can return 405 too.
   return new Response('Please use POST method to process a URL.', { status: 405 });
 }) as unknown as PagesFunction<Env>; 

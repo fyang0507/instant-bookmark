@@ -1,6 +1,6 @@
 // functions/api/save-to-notion.ts
 
-import type { PagesFunction, EventContext } from '@cloudflare/workers-types';
+import type { PagesFunction, EventContext, Request as CfRequest } from '@cloudflare/workers-types';
 
 // Define interfaces for the expected bookmark data from the frontend
 interface BookmarkData {
@@ -123,8 +123,11 @@ export interface Env {
   API_ACCESS_KEY: string; // Shared secret for clients to access the API
 }
 
-export const onRequestPost = (async (context: EventContext<Env, string, unknown>) => {
-  const { request, env } = context;
+// New handler for standard Worker signature, accepting CfRequest, no ctx
+export async function handleSaveToNotionPost(
+  request: CfRequest,
+  env: Env
+): Promise<Response> {
   try {
     const clientApiKey = request.headers.get('X-API-Key');
     if (!clientApiKey || clientApiKey !== env.API_ACCESS_KEY) {
@@ -152,10 +155,8 @@ export const onRequestPost = (async (context: EventContext<Env, string, unknown>
       };
     }
     
-    // Construct page content (children)
     const pageChildren: NotionBlockPayload[] = [];
 
-    // 1. Add URL as a bookmark block if it exists
     if (bookmark.url) {
       pageChildren.push({ 
         type: 'bookmark',
@@ -163,18 +164,16 @@ export const onRequestPost = (async (context: EventContext<Env, string, unknown>
       });
     }
 
-    // 2. Add placeholder for screenshot if source is screenshot
     if (bookmark.source === 'screenshot') {
-      if (bookmark.uploadId) { // Check for uploadId
+      if (bookmark.uploadId) {
         pageChildren.push({
           type: 'image',
           image: {
-            type: 'file_upload', // Set type to 'file_upload'
-            file_upload: { id: bookmark.uploadId }, // Use the uploadId
+            type: 'file_upload',
+            file_upload: { id: bookmark.uploadId }, 
           },
         });
       } else {
-        // Fallback to placeholder if uploadId is somehow missing
         pageChildren.push({
           type: 'paragraph',
           paragraph: {
@@ -184,7 +183,6 @@ export const onRequestPost = (async (context: EventContext<Env, string, unknown>
       }
     }
     
-    // 3. Add Summary as a paragraph if it exists
     if (bookmark.summary) {
       pageChildren.push({
         type: 'heading_2',
@@ -200,7 +198,6 @@ export const onRequestPost = (async (context: EventContext<Env, string, unknown>
       });
     }
 
-    // 4. Add Thoughts if they exist
     if (bookmark.thoughts) {
       pageChildren.push({
         type: 'heading_2',
@@ -233,9 +230,8 @@ export const onRequestPost = (async (context: EventContext<Env, string, unknown>
     });
 
     if (!notionResponse.ok) {
-      const errorData = await notionResponse.json() as NotionErrorResponse; // Type assertion
+      const errorData = await notionResponse.json() as NotionErrorResponse;
       console.error('Notion API Error:', errorData);
-      // Safely access message, fallback to statusText if message is not present for some reason
       const errorMessage = errorData.message || notionResponse.statusText;
       return new Response(`Failed to save to Notion: ${errorMessage}`, { status: notionResponse.status });
     }
@@ -249,25 +245,26 @@ export const onRequestPost = (async (context: EventContext<Env, string, unknown>
         errorMessage = error.message;
     } else if (typeof error === 'string') {
         errorMessage = error;
-    }
-    
-    if (error instanceof SyntaxError && error.message.includes("JSON")) {
-        return new Response('Invalid JSON payload provided.', { status: 400 });
-    }
+    } // Ensure there's a default response if none of the above conditions are met.
     return new Response(errorMessage, { status: 500 });
   }
+}
+
+export const onRequestPost = (async (context: EventContext<Env, string, unknown>) => {
+  // Call worker-style handler, no ctx needed for handleSaveToNotionPost
+  return handleSaveToNotionPost(context.request, context.env);
 }) as unknown as PagesFunction<Env>;
 
-// Fallback for other methods (GET, PUT, DELETE etc.) if needed
+// Fallback for other methods (GET, PUT, DELETE etc.) - Assumed to exist if not shown
 export const onRequest = (async (context: EventContext<Env, string, unknown>) => {
-  const { request, env } = context;
-  const clientApiKey = request.headers.get('X-API-Key');
-  if (request.method !== 'POST') {
-    if (!clientApiKey || clientApiKey !== env.API_ACCESS_KEY) {
-      console.warn('[save-to-notion] Unauthorized API access attempt to non-POST endpoint');
-      return new Response('Unauthorized: Invalid or missing API Key', { status: 401 });
+    const { request, env } = context;
+    const clientApiKey = request.headers.get('X-API-Key');
+    if (request.method !== 'POST') {
+      if (!clientApiKey || clientApiKey !== env.API_ACCESS_KEY) {
+        console.warn('[save-to-notion] Unauthorized API access attempt to non-POST endpoint');
+        return new Response('Unauthorized: Invalid or missing API Key', { status: 401 });
+      }
+      return new Response(`Method ${request.method} Not Allowed`, { status: 405, headers: { 'Allow': 'POST' } });
     }
-    return new Response(`Method ${request.method} Not Allowed`, { status: 405, headers: { 'Allow': 'POST' } });
-  }
-  return new Response('Please use POST method to save a bookmark.', { status: 405 });
-}) as unknown as PagesFunction<Env>; 
+    return new Response('Please use POST method to save to Notion.', { status: 405 });
+  }) as unknown as PagesFunction<Env>; 

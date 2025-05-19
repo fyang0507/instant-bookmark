@@ -1,0 +1,25 @@
+name = "instant-bookmark"
+main = "functions/api/index.ts"
+compatibility_date = "2025-05-19"
+workers_dev = true # Allows deployment to a *.workers.dev subdomain for easy testing
+
+# Serve static assets from the './dist' folder (output of 'npm run build')
+[site]
+bucket = "./dist"
+
+# By default, your Worker can access environment variables defined in .dev.vars when running locally with `wrangler dev`.
+# For deployed Workers, you need to set secrets/variables in the Cloudflare dashboard or via Wrangler commands.
+# If you had specific variables from .dev.vars that are not secrets and you want them bundled, you could use [vars]
+# e.g., if .dev.vars contains: NOTION_API_KEY="secret..." (this should be a secret)
+# and also: PUBLIC_APP_NAME="My Awesome App" (this could be a var)
+# [vars]
+# APP_NAME = "My Awesome App" # Then access via env.APP_NAME in your worker
+
+# Modern Wrangler often handles TypeScript compilation automatically if a tsconfig.json is present.
+# If you find that your .ts files in functions/api are not being compiled correctly, 
+# or you need a more specific build process for them (e.g., bundling multiple files into one for the worker),
+# you might need to add a [build] section like this:
+# [build]
+# command = "npm run build:worker"  # You would need to define this script in package.json
+# watch_dir = "functions/api"
+# entry_point = "some-built-file.js" # If the build output is different from 'main' 
