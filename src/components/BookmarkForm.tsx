@@ -9,8 +9,9 @@ import { processUrl, processScreenshot, saveToNotion } from '../services/bookmar
 const BookmarkForm: React.FC = () => {
   const [url, setUrl] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [thoughts, setThoughts] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [preview, setPreview] = useState<{ title: string; content: string } | null>(null);
+  const [preview, setPreview] = useState<{ title: string; summary: string; uploadId?: string; } | null>(null);
   const toast = useToast();
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,6 +28,10 @@ const BookmarkForm: React.FC = () => {
         setUrl('');
       }
     }
+  };
+
+  const handleThoughtsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setThoughts(e.target.value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,15 +69,18 @@ const BookmarkForm: React.FC = () => {
     try {
       await saveToNotion({
         title: preview.title,
-        content: preview.content,
+        summary: preview.summary,
         source: url ? 'url' : 'screenshot',
         url: url || undefined,
+        thoughts: thoughts,
+        uploadId: (url ? undefined : preview.uploadId) || undefined,
       });
       
       toast.success('Saved to Notion successfully');
       setUrl('');
       setFile(null);
       setPreview(null);
+      setThoughts('');
     } catch (error) {
       toast.error('Error saving to Notion: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
@@ -81,70 +89,97 @@ const BookmarkForm: React.FC = () => {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardContent>
-        <h2 className="text-2xl font-bold mb-6">Create Bookmark</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex flex-col space-y-4">
-            <div className="relative">
-              <Input
-                type="url"
-                value={url}
-                onChange={handleUrlChange}
-                placeholder="Enter URL to bookmark"
-                disabled={isProcessing}
-                fullWidth
-                label="Website URL"
-                id="url-input"
-                icon={<Link2 className="w-5 h-5 text-gray-400" />}
-              />
-            </div>
-            
-            <div className="flex items-center my-4">
-              <div className="flex-grow h-px bg-gray-300 dark:bg-gray-700"></div>
-              <span className="px-4 text-sm text-gray-500 dark:text-gray-400">OR</span>
-              <div className="flex-grow h-px bg-gray-300 dark:bg-gray-700"></div>
-            </div>
-            
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Upload Screenshot
-              </label>
-              <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-md">
-                <div className="space-y-1 text-center">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                  <div className="flex text-sm text-gray-600 dark:text-gray-400">
-                    <label
-                      htmlFor="file-upload"
-                      className="relative cursor-pointer rounded-md font-medium text-blue-500 hover:text-blue-400 focus-within:outline-none"
-                    >
-                      <span>Upload a file</span>
-                      <input
-                        id="file-upload"
-                        name="file-upload"
-                        type="file"
-                        className="sr-only"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        disabled={isProcessing}
-                      />
-                    </label>
-                    <p className="pl-1">or drag and drop</p>
+    <Card className="w-full max-w-4xl mx-auto">
+      <CardContent className="p-6 md:p-8">
+        <h2 className="text-2xl font-bold mb-8 text-center">Create Bookmark</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="flex flex-col md:flex-row md:space-x-8">
+            <div className="flex-1 flex flex-col space-y-6">
+              <div>
+                <label htmlFor="url-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Website URL
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Link2 className="w-5 h-5 text-gray-400" />
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    PNG, JPG, GIF up to 10MB
-                  </p>
+                  <Input
+                    type="url"
+                    value={url}
+                    onChange={handleUrlChange}
+                    placeholder="Enter URL to bookmark"
+                    disabled={isProcessing}
+                    fullWidth
+                    id="url-input"
+                    className="pl-10"
+                  />
                 </div>
               </div>
-              {file && (
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  Selected file: {file.name}
-                </p>
-              )}
+              
+              <div className="flex items-center">
+                <div className="flex-grow h-px bg-gray-300 dark:bg-gray-700"></div>
+                <span className="px-4 text-sm text-gray-500 dark:text-gray-400">OR</span>
+                <div className="flex-grow h-px bg-gray-300 dark:bg-gray-700"></div>
+              </div>
+              
+              <div className="flex flex-col flex-grow">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Upload Screenshot
+                </label>
+                <div className="flex flex-col flex-grow justify-center items-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-md">
+                  <div className="space-y-1 text-center">
+                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                      <label
+                        htmlFor="file-upload"
+                        className="relative cursor-pointer rounded-md font-medium text-blue-500 hover:text-blue-400 focus-within:outline-none"
+                      >
+                        <span>Upload a file</span>
+                        <input
+                          id="file-upload"
+                          name="file-upload"
+                          type="file"
+                          className="sr-only"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          disabled={isProcessing}
+                        />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      PNG, JPG, GIF up to 10MB
+                    </p>
+                  </div>
+                </div>
+                {file && (
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    Selected file: {file.name}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex-1 flex flex-col mt-6 md:mt-0 md:pl-0">
+              <div className="flex flex-col flex-grow">
+                <label htmlFor="thoughts-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Share your thoughts
+                </label>
+                <textarea
+                  id="thoughts-input"
+                  name="thoughts"
+                  className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-gray-300 p-2 flex-grow"
+                  placeholder="Share your thoughts..."
+                  value={thoughts}
+                  onChange={handleThoughtsChange}
+                  disabled={isProcessing}
+                  rows={8}
+                />
+              </div>
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end pt-8">
             <Button 
               type="submit" 
               disabled={(!url && !file) || isProcessing}
@@ -162,8 +197,14 @@ const BookmarkForm: React.FC = () => {
           <div className="w-full p-4 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 mb-4">
             <h4 className="font-bold">{preview.title}</h4>
             <p className="text-gray-600 dark:text-gray-400 mt-2 line-clamp-3">
-              {preview.content}
+              {preview.summary}
             </p>
+            {thoughts && (
+              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Your Thoughts:</h5>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 line-clamp-3">{thoughts}</p>
+              </div>
+            )}
           </div>
           <div className="flex justify-end w-full">
             <Button
@@ -177,7 +218,7 @@ const BookmarkForm: React.FC = () => {
             <Button
               onClick={handleSave}
               disabled={isProcessing}
-              isLoading={isProcessing && preview}
+              isLoading={isProcessing && !!preview}
             >
               Save to Notion
             </Button>
