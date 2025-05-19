@@ -24,6 +24,7 @@ export default {
     env: MyWorkerEnv
   ): Promise<Response> { 
     const url = new URL(request.url);
+    console.log(`[Worker] Request received for: ${request.url}, Pathname: ${url.pathname}`);
 
     try {
       if (url.pathname === '/api/process-url') {
@@ -39,20 +40,38 @@ export default {
     }
 
     if (url.pathname.startsWith('/api/')) {
+      console.log(`[Worker] API endpoint not found for: ${url.pathname}`);
       return new Response('API endpoint not found.', { status: 404 });
     }
 
-    // For any other request, try to serve it from static assets
-    // (e.g., index.html for '/', or other assets like CSS, JS)
+    console.log("[Worker] Attempting to serve static asset.");
+
+    if (!env.__STATIC_CONTENT || typeof env.__STATIC_CONTENT.fetch !== 'function') {
+      console.error("[Worker] Error: env.__STATIC_CONTENT binding is missing or not a valid fetcher.");
+      return new Response('Static content environment not configured.', { status: 500 });
+    }
+
     try {
-      // env.__STATIC_CONTENT is automatically populated by Wrangler when you have [site]
-      // in your wrangler.toml and it points to your 'dist' (or other) asset folder.
-      return await env.__STATIC_CONTENT.fetch(request);
-    } catch (e) {
-      // This can happen if the asset isn't found in the static content namespace
-      // or if there's an issue with the binding itself.
-      console.error("Failed to serve static content:", e);
-      return new Response('Resource not found.', { status: 404 });
+      console.log(`[Worker] Calling env.__STATIC_CONTENT.fetch for: ${url.pathname}`);
+      const assetResponse = await env.__STATIC_CONTENT.fetch(request);
+      console.log(`[Worker] env.__STATIC_CONTENT.fetch responded with status: ${assetResponse.status} for: ${url.pathname}`);
+      
+      // If assetResponse is a 404, it means the asset was not found in the KV store by the handler.
+      // We just return that response directly.
+      if (assetResponse.status === 404) {
+        console.log(`[Worker] Asset not found by __STATIC_CONTENT.fetch for: ${url.pathname}. Returning 404 from asset handler.`);
+      }
+      return assetResponse;
+
+    } catch (e: unknown) {
+      let errorMessage = 'Unknown error';
+      let errorStack = 'No stack available';
+      if (e instanceof Error) {
+        errorMessage = e.message;
+        errorStack = e.stack || errorStack;
+      }
+      console.error(`[Worker] Error during env.__STATIC_CONTENT.fetch for ${url.pathname}:`, errorMessage, errorStack);
+      return new Response('Resource not found due to an error serving static content.', { status: 404 });
     }
   },
 }; 
