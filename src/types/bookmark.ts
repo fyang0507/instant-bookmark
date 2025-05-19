@@ -1,8 +1,10 @@
 export interface Bookmark {
   id: string;
   title: string;
-  content: string;
+  summary: string;
   source: 'url' | 'screenshot';
   url?: string;
+  thoughts?: string;
+  uploadId?: string;
   createdAt: string;
 }
