@@ -16,6 +16,7 @@
     "react-router-dom": "^6.22.2"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250517.0",
     "@eslint/js": "^9.9.1",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
