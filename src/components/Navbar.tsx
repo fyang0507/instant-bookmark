@@ -22,8 +22,11 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <Bookmark className="h-8 w-8 text-blue-500" />
-              <span className="ml-2 text-xl font-bold">Instant Bookmark</span>
+              <img 
+                src={theme === 'dark' ? "/logo-dark.png" : "/logo-light.png"} 
+                alt="Instant Bookmark Logo" 
+                className="h-11 w-auto" 
+              />
             </Link>
           </div>
 

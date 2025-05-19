@@ -1,3 +1,11 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./public/logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="./public/logo-light.png">
+    <img alt="Instant Bookmark Logo" src="./public/logo-dark.png" width="200">
+  </picture>
+</p>
+
 instant-bookmark
 
 ## Development Status & Action Plan
