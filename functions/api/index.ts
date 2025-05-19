@@ -8,46 +8,32 @@ import { Env as ProcessScreenshotEnv } from './process-screenshot';
 import { handleSaveToNotionPost } from './save-to-notion';
 import { Env as SaveToNotionEnv } from './save-to-notion';
 
-import type { Request as CfRequest } from '@cloudflare/workers-types';
+import type { Request as CfRequest, ExecutionContext } from '@cloudflare/workers-types';
+import { getAssetFromKV, NotFoundError, MethodNotAllowedError } from '@cloudflare/kv-asset-handler';
+
+// @ts-expect-error wrangler magically provides this manifest
+import manifestJSON from '__STATIC_CONTENT_MANIFEST';
+const assetManifest = JSON.parse(manifestJSON);
 
 // MyWorkerEnv combines Env types from all handlers.
 interface MyWorkerEnv extends ProcessUrlEnv, ProcessScreenshotEnv, SaveToNotionEnv { 
-  // This binding is provided by Cloudflare Workers when [site] config is used
-  // It gives access to the static assets uploaded from the "bucket" directory
-  __STATIC_CONTENT: any;
+  // This is the KV Namespace for static assets, temporarily type as any to bypass complex type issues
+  __STATIC_CONTENT: any; 
   [key: string]: unknown;
 }
 
 export default {
   async fetch(
     request: CfRequest, 
-    env: MyWorkerEnv
-    // Consider adding ctx: ExecutionContext if you need it for other purposes
+    env: MyWorkerEnv,
+    ctx: ExecutionContext // Required by getAssetFromKV for waitUntil
   ): Promise<Response> { 
-    console.log("[Worker] Fetch handler invoked.");
+    // Existing detailed logging can be kept or removed once this is working
+    console.log("[Worker] Fetch handler invoked (using kv-asset-handler).");
     console.log("[Worker] env object keys:", Object.keys(env).join(', '));
     console.log("[Worker] typeof env.__STATIC_CONTENT:", typeof env.__STATIC_CONTENT);
-
     if (env.__STATIC_CONTENT && typeof env.__STATIC_CONTENT === 'object') {
-      console.log("[Worker] env.__STATIC_CONTENT object keys:", Object.keys(env.__STATIC_CONTENT).join(', '));
-      console.log("[Worker] env.__STATIC_CONTENT.fetch exists:", typeof env.__STATIC_CONTENT.fetch === 'function');
-      // Log other properties if they exist to understand what this object is
-      if (typeof env.__STATIC_CONTENT.get === 'function') {
-        console.log("[Worker] env.__STATIC_CONTENT.get exists: true (suggests KV binding)");
-      }
-      if (typeof env.__STATIC_CONTENT.put === 'function') {
-        console.log("[Worker] env.__STATIC_CONTENT.put exists: true (suggests KV binding)");
-      }
-      if (typeof env.__STATIC_CONTENT.delete === 'function') {
-        console.log("[Worker] env.__STATIC_CONTENT.delete exists: true (suggests KV binding)");
-      }
-      if (typeof env.__STATIC_CONTENT.list === 'function') {
-        console.log("[Worker] env.__STATIC_CONTENT.list exists: true (suggests KV binding)");
-      }
-    } else if (env.__STATIC_CONTENT) {
-      console.log("[Worker] env.__STATIC_CONTENT is not an object, type is:", typeof env.__STATIC_CONTENT);
-    } else {
-      console.log("[Worker] env.__STATIC_CONTENT is null or undefined.");
+      console.log("[Worker] env.__STATIC_CONTENT.get exists:", typeof env.__STATIC_CONTENT.get === 'function');
     }
 
     const url = new URL(request.url);
@@ -71,34 +57,52 @@ export default {
       return new Response('API endpoint not found.', { status: 404 });
     }
 
-    console.log("[Worker] Attempting to serve static asset.");
-
-    if (!env.__STATIC_CONTENT || typeof env.__STATIC_CONTENT.fetch !== 'function') {
-      console.error("[Worker] Error: env.__STATIC_CONTENT binding is missing or not a valid fetcher.");
-      return new Response('Static content environment not configured.', { status: 500 });
-    }
-
+    // Use kv-asset-handler to serve static assets
     try {
-      console.log(`[Worker] Calling env.__STATIC_CONTENT.fetch for: ${url.pathname}`);
-      const assetResponse = await env.__STATIC_CONTENT.fetch(request);
-      console.log(`[Worker] env.__STATIC_CONTENT.fetch responded with status: ${assetResponse.status} for: ${url.pathname}`);
-      
-      // If assetResponse is a 404, it means the asset was not found in the KV store by the handler.
-      // We just return that response directly.
-      if (assetResponse.status === 404) {
-        console.log(`[Worker] Asset not found by __STATIC_CONTENT.fetch for: ${url.pathname}. Returning 404 from asset handler.`);
-      }
-      return assetResponse;
-
+      console.log(`[Worker] Attempting to serve static asset via getAssetFromKV for: ${url.pathname}`);
+      return await getAssetFromKV(
+        {
+          request: request as unknown as Request,
+          waitUntil(promise) {
+            return ctx.waitUntil(promise);
+          },
+        },
+        {
+          ASSET_NAMESPACE: env.__STATIC_CONTENT,
+          ASSET_MANIFEST: assetManifest,
+        }
+      );
     } catch (e: unknown) {
-      let errorMessage = 'Unknown error';
-      let errorStack = 'No stack available';
-      if (e instanceof Error) {
-        errorMessage = e.message;
-        errorStack = e.stack || errorStack;
+      if (e instanceof NotFoundError) {
+        console.log(`[Worker] Asset not found by getAssetFromKV for: ${url.pathname}.`);
+        // You can return a custom 404 page here if you have one, e.g., by fetching '/404.html'
+        // For SPA, often you'd return index.html for paths not found
+        // let notFoundResponse = await getAssetFromKV(
+        //   {
+        //     request,
+        //     waitUntil(promise) {
+        //       return ctx.waitUntil(promise);
+        //     },
+        //   },
+        //   {
+        //     ASSET_NAMESPACE: env.__STATIC_CONTENT,
+        //     ASSET_MANIFEST: assetManifest,
+        //     mapRequestToAsset: req => new Request(`${new URL(req.url).origin}/index.html`, req),
+        //   }
+        // );
+        // return new Response(notFoundResponse.body, { ...notFoundResponse, status: 404 });
+        return new Response('Not found', { status: 404 });
+      } else if (e instanceof MethodNotAllowedError) {
+        console.log(`[Worker] Method not allowed by getAssetFromKV for: ${url.pathname}.`);
+        return new Response('Method not allowed', { status: 405 });
+      } else {
+        let errorMessage = 'Unknown error serving static asset';
+        if (e instanceof Error) {
+          errorMessage = e.message;
+        }
+        console.error('[Worker] Error during getAssetFromKV:', errorMessage, e);
+        return new Response('An unexpected error occurred', { status: 500 });
       }
-      console.error(`[Worker] Error during env.__STATIC_CONTENT.fetch for ${url.pathname}:`, errorMessage, errorStack);
-      return new Response('Resource not found due to an error serving static content.', { status: 404 });
     }
   },
 }; 
