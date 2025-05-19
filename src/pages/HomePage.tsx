@@ -40,10 +40,8 @@ const HomePage: React.FC = () => {
         </div>
         
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center">
-          <div className="bg-teal-100 dark:bg-teal-900/30 p-3 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-            <svg className="h-8 w-8 text-teal-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6.75 3V5.25M17.25 3V5.25M3 18.75V7.5C3 6.25736 4.00736 5.25 5.25 5.25H18.75C19.9926 5.25 21 6.25736 21 7.5V18.75M3 18.75C3 19.9926 4.00736 21 5.25 21H18.75C19.9926 21 21 19.9926 21 18.75M3 18.75V11.25C3 10.0074 4.00736 9 5.25 9H18.75C19.9926 9 21 10.0074 21 11.25V18.75M12 12.75H8.25V16.5H12V12.75Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/e/e9/Notion-logo.svg" alt="Notion Logo" className="h-8 w-8 opacity-65" />
           </div>
           <h3 className="text-xl font-semibold mb-2">Notion Integration</h3>
           <p className="text-gray-600 dark:text-gray-400">
