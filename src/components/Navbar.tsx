@@ -23,7 +23,7 @@ const Navbar: React.FC = () => {
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
               <Bookmark className="h-8 w-8 text-blue-500" />
-              <span className="ml-2 text-xl font-bold">Bookmark.io</span>
+              <span className="ml-2 text-xl font-bold">Instant Bookmark</span>
             </Link>
           </div>
 
