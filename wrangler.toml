@@ -7,6 +7,9 @@ workers_dev = true # Allows deployment to a *.workers.dev subdomain for easy tes
 [site]
 bucket = "./dist"
 
+[observability.logs]
+enabled = true
+
 # By default, your Worker can access environment variables defined in .dev.vars when running locally with `wrangler dev`.
 # For deployed Workers, you need to set secrets/variables in the Cloudflare dashboard or via Wrangler commands.
 # If you had specific variables from .dev.vars that are not secrets and you want them bundled, you could use [vars]
