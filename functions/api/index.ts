@@ -14,7 +14,7 @@ import type { Request as CfRequest } from '@cloudflare/workers-types';
 interface MyWorkerEnv extends ProcessUrlEnv, ProcessScreenshotEnv, SaveToNotionEnv { 
   // This binding is provided by Cloudflare Workers when [site] config is used
   // It gives access to the static assets uploaded from the "bucket" directory
-  __STATIC_CONTENT: { fetch: (request: CfRequest) => Promise<Response> };
+  __STATIC_CONTENT: any;
   [key: string]: unknown;
 }
 
@@ -27,9 +27,25 @@ export default {
     console.log("[Worker] Fetch handler invoked.");
     console.log("[Worker] env object keys:", Object.keys(env).join(', '));
     console.log("[Worker] typeof env.__STATIC_CONTENT:", typeof env.__STATIC_CONTENT);
-    if (env.__STATIC_CONTENT) {
-      console.log("[Worker] env.__STATIC_CONTENT object keys (if object):", typeof env.__STATIC_CONTENT === 'object' && env.__STATIC_CONTENT !== null ? Object.keys(env.__STATIC_CONTENT).join(', ') : 'Not an object or null');
+
+    if (env.__STATIC_CONTENT && typeof env.__STATIC_CONTENT === 'object') {
+      console.log("[Worker] env.__STATIC_CONTENT object keys:", Object.keys(env.__STATIC_CONTENT).join(', '));
       console.log("[Worker] env.__STATIC_CONTENT.fetch exists:", typeof env.__STATIC_CONTENT.fetch === 'function');
+      // Log other properties if they exist to understand what this object is
+      if (typeof env.__STATIC_CONTENT.get === 'function') {
+        console.log("[Worker] env.__STATIC_CONTENT.get exists: true (suggests KV binding)");
+      }
+      if (typeof env.__STATIC_CONTENT.put === 'function') {
+        console.log("[Worker] env.__STATIC_CONTENT.put exists: true (suggests KV binding)");
+      }
+      if (typeof env.__STATIC_CONTENT.delete === 'function') {
+        console.log("[Worker] env.__STATIC_CONTENT.delete exists: true (suggests KV binding)");
+      }
+      if (typeof env.__STATIC_CONTENT.list === 'function') {
+        console.log("[Worker] env.__STATIC_CONTENT.list exists: true (suggests KV binding)");
+      }
+    } else if (env.__STATIC_CONTENT) {
+      console.log("[Worker] env.__STATIC_CONTENT is not an object, type is:", typeof env.__STATIC_CONTENT);
     } else {
       console.log("[Worker] env.__STATIC_CONTENT is null or undefined.");
     }
