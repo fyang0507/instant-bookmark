@@ -59,12 +59,17 @@ const HomePage: React.FC = () => {
               Ready to organize your digital life?
             </h2>
             <p className="text-gray-600 dark:text-gray-300">
-              Start bookmarking webpages and images effortlessly.
+              Fork this repo and start bookmarking webpages and images effortlessly.
             </p>
           </div>
-          <button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium flex items-center transition-colors">
+          <a
+            href="https://github.com/fyang0507/instant-bookmark"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium flex items-center transition-colors no-underline"
+          >
             Get Started <ArrowRight className="ml-2 h-5 w-5" />
-          </button>
+          </a>
         </div>
       </div>
     </div>
