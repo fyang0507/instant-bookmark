@@ -23,7 +23,25 @@ const BookmarkForm: React.FC = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+
+      if (selectedFile.size > maxSize) {
+        toast.error('File size exceeds 5MB. Please upload a smaller file.');
+        setFile(null);
+        e.target.value = ''; // Reset file input
+        return;
+      }
+
+      if (!allowedTypes.includes(selectedFile.type)) {
+        toast.error('Invalid file type. Please upload a PNG, JPG, WEBP, or GIF image.');
+        setFile(null);
+        e.target.value = ''; // Reset file input
+        return;
+      }
+
+      setFile(selectedFile);
       if (url) {
         setUrl('');
       }
@@ -140,7 +158,7 @@ const BookmarkForm: React.FC = () => {
                           name="file-upload"
                           type="file"
                           className="sr-only"
-                          accept="image/*"
+                          accept="image/png, image/jpeg, image/webp, image/gif"
                           onChange={handleFileChange}
                           disabled={isProcessing}
                         />
@@ -148,7 +166,7 @@ const BookmarkForm: React.FC = () => {
                       <p className="pl-1">or drag and drop</p>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      PNG, JPG, GIF up to 10MB
+                      PNG, JPG, WEBP, GIF up to 5MB
                     </p>
                   </div>
                 </div>
