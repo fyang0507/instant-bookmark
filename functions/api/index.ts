@@ -8,7 +8,7 @@ import { Env as ProcessScreenshotEnv } from './process-screenshot';
 import { handleSaveToNotionPost } from './save-to-notion';
 import { Env as SaveToNotionEnv } from './save-to-notion';
 
-import type { Request as CfRequest, ExecutionContext } from '@cloudflare/workers-types';
+import type { Request as CfRequest, ExecutionContext, KVNamespace } from '@cloudflare/workers-types';
 import { getAssetFromKV, NotFoundError, MethodNotAllowedError } from '@cloudflare/kv-asset-handler';
 
 // @ts-expect-error wrangler magically provides this manifest
@@ -17,8 +17,7 @@ const assetManifest = JSON.parse(manifestJSON);
 
 // MyWorkerEnv combines Env types from all handlers.
 interface MyWorkerEnv extends ProcessUrlEnv, ProcessScreenshotEnv, SaveToNotionEnv { 
-  // This is the KV Namespace for static assets, temporarily type as any to bypass complex type issues
-  __STATIC_CONTENT: any; 
+  __STATIC_CONTENT: KVNamespace; // Correctly typed here
   [key: string]: unknown;
 }
 
@@ -29,12 +28,7 @@ export default {
     ctx: ExecutionContext // Required by getAssetFromKV for waitUntil
   ): Promise<Response> { 
     // Existing detailed logging can be kept or removed once this is working
-    console.log("[Worker] Fetch handler invoked (using kv-asset-handler).");
-    console.log("[Worker] env object keys:", Object.keys(env).join(', '));
-    console.log("[Worker] typeof env.__STATIC_CONTENT:", typeof env.__STATIC_CONTENT);
-    if (env.__STATIC_CONTENT && typeof env.__STATIC_CONTENT === 'object') {
-      console.log("[Worker] env.__STATIC_CONTENT.get exists:", typeof env.__STATIC_CONTENT.get === 'function');
-    }
+    console.log("[Worker] Fetch handler invoked.");
 
     const url = new URL(request.url);
     console.log(`[Worker] Request received for: ${request.url}, Pathname: ${url.pathname}`);
@@ -68,7 +62,8 @@ export default {
           },
         },
         {
-          ASSET_NAMESPACE: env.__STATIC_CONTENT,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ASSET_NAMESPACE: env.__STATIC_CONTENT as any, // Use 'as any' here due to persistent deep type conflict
           ASSET_MANIFEST: assetManifest,
         }
       );
