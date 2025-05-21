@@ -1,6 +1,7 @@
 name = "instant-bookmark"
 main = "functions/api/index.ts"
-compatibility_date = "2025-05-19"
+compatibility_date = "2025-05-08"
+compatibility_flags = ["nodejs_compat"]
 workers_dev = true # Allows deployment to a *.workers.dev subdomain for easy testing
 
 # Serve static assets from the './dist' folder (output of 'npm run build')
