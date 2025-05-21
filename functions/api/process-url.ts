@@ -64,6 +64,8 @@ export async function handleProcessUrlPost(
       summary: llmContent.summary,
     };
 
+    // TODO: add fallback to mcp vision mode if headless mode fails
+
     return new Response(JSON.stringify(responseBody), {
       headers: { 'Content-Type': 'application/json' },
       status: 200,
