@@ -1,4 +1,6 @@
 import type { PagesFunction, EventContext, Request as CfRequest } from '@cloudflare/workers-types';
+import type { Env, LlmContentResponse } from '../types'; // Import shared Env and LlmContentResponse
+import { generateContentForUrl } from '../services/llm-service'; // Import the LLM service
 
 // Define the expected request body for URL processing
 interface ProcessUrlRequest {
@@ -6,16 +8,7 @@ interface ProcessUrlRequest {
 }
 
 // Define the expected response format
-interface ProcessedContentResponse {
-  title: string;
-  summary: string;
-}
-
-// Define the environment variables that the Worker expects.
-export interface Env {
-  API_ACCESS_KEY: string; // Shared secret for clients to access the API
-  // Add other secrets like OPENAI_API_KEY if the real implementation needs them
-}
+// Use LlmContentResponse directly as no additional fields are needed for this endpoint
 
 // New handler for standard Worker signature, accepting CfRequest, no ctx
 export async function handleProcessUrlPost(
@@ -53,13 +46,15 @@ export async function handleProcessUrlPost(
       return new Response('Missing or invalid URL in request body', { status: 400 });
     }
 
-    // Dummy processing logic
-    const dummyTitle = "Processed URL";
-    const dummySummary = "THIS IS A TEST URL PAGE SUMMARY";
+    // Call the LLM service to generate title and summary
+    console.log(`[process-url] Generating content for URL: ${reqBody.url} using LLM service...`);
+    const llmContent = await generateContentForUrl(reqBody.url, env);
+    console.log(`[process-url] LLM content received for URL: ${reqBody.url}.`);
 
-    const responseBody: ProcessedContentResponse = {
-      title: dummyTitle,
-      summary: dummySummary,
+    // The responseBody will directly be of type LlmContentResponse
+    const responseBody: LlmContentResponse = {
+      title: llmContent.title,
+      summary: llmContent.summary,
     };
 
     return new Response(JSON.stringify(responseBody), {

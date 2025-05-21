@@ -1,17 +1,10 @@
 import type { PagesFunction, EventContext, Request as CfRequest } from '@cloudflare/workers-types';
+import type { Env, LlmContentResponse } from '../types'; // Import shared Env and LlmContentResponse
+import { generateContentForScreenshot } from '../services/llm-service'; // Import the LLM service
 
 // Define the expected response format
-interface ProcessedContentResponse {
-  title: string;
-  summary: string;
-  uploadId?: string; // Changed from imageUrl to uploadId
-}
-
-// Define the environment variables that the Worker expects.
-export interface Env {
-  API_ACCESS_KEY: string; // Shared secret for clients to access the API
-  NOTION_API_KEY: string; // Notion API Key for uploading files
-  // OPENAI_API_KEY etc. if needed
+interface ProcessedScreenshotResponse extends LlmContentResponse { // Extend LlmContentResponse
+  uploadId: string; 
 }
 
 // New handler for standard Worker signature, accepting CfRequest, no ctx
@@ -104,12 +97,14 @@ export async function handleProcessScreenshotPost(
       
       console.log(`[process-screenshot] Step 2 successful. File bytes sent for ${uploadId}.`);
 
-      const dummyTitle = "Processed Screenshot"; 
-      const dummySummary = "THIS IS A TEST SCREENSHOT SUMMARY";
+      // Call the LLM service to generate title and summary
+      console.log(`[process-screenshot] Step 3: Generating content for screenshot ${uploadId} using LLM service...`);
+      const llmContent = await generateContentForScreenshot(file, env);
+      console.log(`[process-screenshot] Step 3 successful. LLM content received for ${uploadId}.`);
 
-      const responseBody: ProcessedContentResponse = {
-        title: dummyTitle,
-        summary: dummySummary,
+      const responseBody: ProcessedScreenshotResponse = {
+        title: llmContent.title,
+        summary: llmContent.summary,
         uploadId: uploadId,
       };
 
