@@ -1,7 +1,7 @@
 import type { PagesFunction, EventContext, Request as CfRequest } from '@cloudflare/workers-types';
 import type { Env, LlmContentResponse } from '../types'; // Import shared Env and LlmContentResponse
 import { generateTitleAndSummaryForText } from '../services/llm-service'; // Import the LLM service for text processing
-import { generateContentForUrl } from '../services/mcp-service'; // Import the MCP service for URL content extraction
+import { generateContentForUrl } from '../services/browserless-service'; // Import the Browserless service for URL content extraction
 
 // Define the expected request body for URL processing
 interface ProcessUrlRequest {
