@@ -1,6 +1,7 @@
 import type { PagesFunction, EventContext, Request as CfRequest } from '@cloudflare/workers-types';
 import type { Env, LlmContentResponse } from '../types'; // Import shared Env and LlmContentResponse
-import { generateContentForUrl } from '../services/llm-service'; // Import the LLM service
+import { generateTitleAndSummaryForText } from '../services/llm-service'; // Import the LLM service for text processing
+import { generateContentForUrl } from '../services/mcp-service'; // Import the MCP service for URL content extraction
 
 // Define the expected request body for URL processing
 interface ProcessUrlRequest {
@@ -47,9 +48,15 @@ export async function handleProcessUrlPost(
     }
 
     // Call the LLM service to generate title and summary
-    console.log(`[process-url] Generating content for URL: ${reqBody.url} using LLM service...`);
-    const llmContent = await generateContentForUrl(reqBody.url, env);
-    console.log(`[process-url] LLM content received for URL: ${reqBody.url}.`);
+    console.log(`[process-url] Extracting text content for URL: ${reqBody.url} using Playwright MCP...`);
+    // Step 1: Get the raw text content from the URL
+    const rawTextContent = await generateContentForUrl(reqBody.url);
+    console.log(`[process-url] Text content extracted for URL: ${reqBody.url}. Length: ${rawTextContent.length}`);
+
+    // Step 2: Generate title and summary from the extracted text
+    console.log(`[process-url] Generating title and summary for extracted text from URL: ${reqBody.url}`);
+    const llmContent = await generateTitleAndSummaryForText(rawTextContent, env);
+    console.log(`[process-url] LLM title and summary generated for URL: ${reqBody.url}.`);
 
     // The responseBody will directly be of type LlmContentResponse
     const responseBody: LlmContentResponse = {
