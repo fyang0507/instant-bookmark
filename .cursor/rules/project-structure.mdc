@@ -19,6 +19,10 @@ This project is a Vite-based React application built with TypeScript and styled 
     *   **[`src/types/`](mdc:src/types)**: Stores TypeScript type definitions and interfaces for type safety.
 *   **`functions/`**: Contains serverless functions.
     *   **[`functions/api/`](mdc:functions/api)**: Likely houses API endpoint implementations.
+    *   **`functions/config/`**: Contains configuration files for the serverless functions.
+    *   **`functions/services/`**: Houses business logic for the serverless functions.
+        *   **`functions/services/__tests__/`**: Contains tests for the serverless function services.
+    *   **`functions/types/`**: Stores TypeScript type definitions and interfaces for the serverless functions.
 *   **`.bolt/`**: Configuration or operational directory, possibly related to a specific toolchain or deployment process.
 *   **`.wrangler/`**: Configuration and state directory for Wrangler, the command-line tool for Cloudflare Workers.
 
