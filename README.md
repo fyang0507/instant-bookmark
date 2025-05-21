@@ -6,7 +6,17 @@
   </picture>
 </p>
 
-# Instant Bookmark
+<p align="center">
+  <!-- Made with TypeScript -->
+  <img src="https://img.shields.io/badge/Made%20with-%F0%9F%92%BB%20TypeScript-blue?logo=typescript" alt="Made with TypeScript" />
+  <!-- License -->
+  <img src="https://img.shields.io/github/license/fyang0507/instant-bookmark?color=green" alt="License" />
+  <!-- Cloudflare Workers -->
+  <img src="https://img.shields.io/badge/Deployed%20on-Cloudflare%20Workers-orange?logo=cloudflare" alt="Deployed on Cloudflare Workers" />
+</p>
+
+
+<h1 align="left">Instant Bookmark </h1>
 
 **Never miss any inspirations even in multi-tasking. Save anything to Notion, instantly. From anywhere.**
 
@@ -114,4 +124,4 @@ An attempt was made to use `playwright-mcp` for advanced browser automation task
 *   **`public/`**: Static assets for the frontend.
 
 ## Completely Vibe-coded
-This project is made possibly thanks to [bolt](https://bolt.new/) and [cursor](https://www.cursor.com/)
+This project is made possibly thanks to [bolt](https://bolt.new/) and [cursor](https://www.cursor.com/).
