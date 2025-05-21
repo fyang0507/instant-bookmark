@@ -139,7 +139,7 @@ export async function generateTitleAndSummaryForText(
       messages: [
         {
           role: 'system',
-          content: "You are an AI assistant. You are given a text from a webpage, your task is to generate a title and summary for the text. Reply ONLY with a JSON object that has two keys: 'title' (string, concise, max 10 words) and 'summary' (string, 50-100 words). Focus on the main content of the provided text, which is from a webpage. Use the original language of the text."
+          content: "You are an AI assistant. You are given a text from a webpage, your task is to generate a title and summary for the text. Reply ONLY with a JSON object that has two keys: 'title' (string, concise, max 10 words) and 'summary' (string, roughly 50 words). Focus on the main content of the provided text, which is from a webpage. Use the original language of the text."
         },
         {
           role: 'user',
