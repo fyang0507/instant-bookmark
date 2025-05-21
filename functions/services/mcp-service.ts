@@ -1,3 +1,5 @@
+// Not used because CloudFlare worker doesn't allow `child_process.spawn`
+// Instead, use browserless
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
