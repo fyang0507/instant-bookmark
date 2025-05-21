@@ -110,23 +110,87 @@ export async function generateContentForScreenshot(
 }
 
 /**
- * Generates content (title and summary) based on a URL.
- * Currently returns dummy data.
- * 
- * @param url The URL to process.
- * @param env Environment variables, potentially including an LLM API key.
+ * Generates a title and summary for the given text using OpenAI.
+ * @param textContent The text content to summarize.
+ * @param env Environment variables, including OPENAI_API_KEY.
  * @returns A promise that resolves to an LlmContentResponse.
  */
-export async function generateContentForUrl(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  url: string, 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function generateTitleAndSummaryForText(
+  textContent: string,
   env: Env
 ): Promise<LlmContentResponse> {
-  // TODO: Replace with actual LLM call to fetch and process the URL content (e.g., using OpenAI)
-  console.log('[llm-service] Generating content for URL (dummy data)');
-  return {
-    title: "Processed URL Title (from LLM service)",
-    summary: "This is a dummy summary for the URL from the LLM service.",
-  };
+  if (!env.OPENAI_API_KEY) {
+    console.error('[llm-service] OPENAI_API_KEY is not set. Returning dummy data for text summarization.');
+    return {
+      title: "Summarized Text Title (Dummy - OpenAI Key Missing)",
+      summary: "This is a dummy summary for the text because the OpenAI API key was not provided.",
+    };
+  }
+
+  try {
+    console.log('[llm-service] Generating title and summary for text content using OpenAI gpt-4o-mini.');
+    const openai = new OpenAI({
+      apiKey: env.OPENAI_API_KEY,
+    });
+
+    const chatCompletion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini', // Using gpt-4o-mini as per reference
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: 'system',
+          content: "You are an AI assistant. Reply ONLY with a JSON object that has two keys: 'title' (string, concise, max 10 words) and 'summary' (string, short, ~150 words, max 200 words). Focus on the main content of the provided text, which is from a webpage."
+        },
+        {
+          role: 'user',
+          content: textContent.slice(0, 12000) // trim in case huge, as in reference
+        }
+      ],
+      max_tokens: 300 // Increased max_tokens to accommodate longer summaries
+    });
+
+    const messageContent = chatCompletion.choices[0]?.message?.content;
+
+    if (!messageContent) {
+      console.error('[llm-service] OpenAI response missing message content for text summarization:', chatCompletion);
+      throw new Error('Invalid response structure from OpenAI API (text summarization): No message content.');
+    }
+
+    let parsedContent: LlmContentResponse;
+    try {
+      parsedContent = JSON.parse(messageContent);
+    } catch (parseError) {
+      console.error('[llm-service] Error parsing JSON from OpenAI response (text summarization):', parseError, "Raw content:", messageContent);
+      throw new Error('Failed to parse JSON content from OpenAI (text summarization).');
+    }
+
+    if (!parsedContent.title || !parsedContent.summary) {
+        console.error('[llm-service] OpenAI response JSON missing title or summary (text summarization):', parsedContent);
+        throw new Error('OpenAI response JSON is missing title or summary fields (text summarization).');
+    }
+
+    console.log('[llm-service] Successfully generated title and summary from text content via OpenAI.');
+    return {
+      title: parsedContent.title,
+      summary: parsedContent.summary,
+    };
+
+  } catch (e: unknown) {
+    console.error('[llm-service] Error in generateTitleAndSummaryForText:', e);
+    if (e instanceof OpenAI.APIError) {
+        console.error('[llm-service] OpenAI APIError details (text summarization):', e.status, e.headers, e.error);
+        return {
+            title: `Text Summarization Failed (API Error ${e.status})`,
+            summary: `OpenAI API Error (text summarization): ${e.message}`,
+        };
+    }
+    let errorMessage = 'Unknown error during text summarization LLM processing';
+    if (e instanceof Error) {
+        errorMessage = e.message;
+    }
+    return {
+      title: "Text Summarization Failed",
+      summary: `Error processing text with LLM: ${errorMessage}`,
+    };
+  }
 } 
