@@ -42,7 +42,7 @@ export async function generateContentForScreenshot(
       messages: [
         {
           role: "system",
-          content: "You are an AI assistant. Reply ONLY with a JSON object that has two keys: 'title' (string, concise, max 10 words) and 'summary' (string, short, max 50 words)."
+          content: "You are an AI assistant. Reply ONLY with a JSON object that has two keys: 'title' (string, concise, max 10 words) and 'summary' (string, short, max 50 words). Use the original language of the image if it contains text."
         },
         {
           role: "user",
@@ -134,19 +134,19 @@ export async function generateTitleAndSummaryForText(
     });
 
     const chatCompletion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini', // Using gpt-4o-mini as per reference
+      model: 'gpt-4.1-nano', // Using gpt-4o-mini as per reference
       response_format: { type: "json_object" },
       messages: [
         {
           role: 'system',
-          content: "You are an AI assistant. Reply ONLY with a JSON object that has two keys: 'title' (string, concise, max 10 words) and 'summary' (string, short, ~150 words, max 200 words). Focus on the main content of the provided text, which is from a webpage."
+          content: "You are an AI assistant. You are given a text from a webpage, your task is to generate a title and summary for the text. Reply ONLY with a JSON object that has two keys: 'title' (string, concise, max 10 words) and 'summary' (string, 50-100 words). Focus on the main content of the provided text, which is from a webpage. Use the original language of the text."
         },
         {
           role: 'user',
           content: textContent.slice(0, 12000) // trim in case huge, as in reference
         }
       ],
-      max_tokens: 300 // Increased max_tokens to accommodate longer summaries
+      max_tokens: 200 // Increased max_tokens to accommodate longer summaries
     });
 
     const messageContent = chatCompletion.choices[0]?.message?.content;
