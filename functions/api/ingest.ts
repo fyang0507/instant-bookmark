@@ -25,6 +25,7 @@ interface IngestBody {
   url?: string;
   filename?: string;
   data_b64?: string;
+  thoughts?: string;
 }
 
 // Use CfResponse and CfHeaders for consistency with other CF-typed functions
@@ -81,6 +82,7 @@ export default {
           summary: summary.summary,
           source: 'url',
           url: body.url,
+          thoughts: body.thoughts,
         };
         // Construct a new Request object that is compliant with CfRequest for handleSaveToNotionPost
         const notionReq = new Request('http://dummy/save-to-notion', {
@@ -133,6 +135,7 @@ export default {
           summary: screenshotData.summary,
           source: 'screenshot',
           uploadId: screenshotData.uploadId,
+          thoughts: body.thoughts,
         };
         const notionReq = new Request('http://dummy/save-to-notion', {
           method: 'POST',
