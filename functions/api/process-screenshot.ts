@@ -2,6 +2,8 @@ import type { PagesFunction, EventContext, Request as CfRequest } from '@cloudfl
 import type { Env, LlmContentResponse } from '../types'; // Import shared Env and LlmContentResponse
 import { generateContentForScreenshot } from '../services/llm-service'; // Import the LLM service
 
+export type { Env } from '../types'; // Re-export Env
+
 // Define the expected response format
 interface ProcessedScreenshotResponse extends LlmContentResponse { // Extend LlmContentResponse
   uploadId: string; 

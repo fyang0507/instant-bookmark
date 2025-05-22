@@ -3,6 +3,8 @@ import type { Env, LlmContentResponse } from '../types'; // Import shared Env an
 import { generateTitleAndSummaryForText } from '../services/llm-service'; // Import the LLM service for text processing
 import { generateContentForUrl } from '../services/browserless-service'; // Import the Browserless service for URL content extraction
 
+export type { Env } from '../types'; // Re-export Env
+
 // Define the expected request body for URL processing
 interface ProcessUrlRequest {
   url: string;
