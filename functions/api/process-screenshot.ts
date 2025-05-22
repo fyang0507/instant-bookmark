@@ -5,7 +5,7 @@ import { generateContentForScreenshot } from '../services/llm-service'; // Impor
 export type { Env } from '../types'; // Re-export Env
 
 // Define the expected response format
-interface ProcessedScreenshotResponse extends LlmContentResponse { // Extend LlmContentResponse
+export interface ProcessedScreenshotResponse extends LlmContentResponse { // Extend LlmContentResponse
   uploadId: string; 
 }
 

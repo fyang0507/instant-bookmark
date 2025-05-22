@@ -9,8 +9,10 @@ import type {
 } from '@cloudflare/workers-types';
 import type { Env as SaveToNotionEnv } from './save-to-notion';
 import { generateContentForUrl } from '../services/browserless-service';
-import { generateTitleAndSummaryForText, generateContentForScreenshot } from '../services/llm-service';
+import { generateTitleAndSummaryForText } from '../services/llm-service';
 import { handleSaveToNotionPost } from './save-to-notion';
+import { handleProcessScreenshotPost } from './process-screenshot';
+import type { ProcessedScreenshotResponse } from './process-screenshot';
 
 // Define Env for this worker script
 export interface Env extends SaveToNotionEnv {
@@ -104,14 +106,33 @@ export default {
         // 1. Convert base64 to File
         const buffer = Uint8Array.from(atob(body.data_b64), c => c.charCodeAt(0));
         const file = new File([buffer], body.filename, { type: 'image/png' });
-        // 2. Summarize
-        const summary = await generateContentForScreenshot(file, env);
-        // 3. (Optional) Upload image to Notion (not implemented here, see process-screenshot)
-        // 4. Save to Notion
+        
+        // 2. Process screenshot (uploads to Notion and generates summary)
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Construct a new Request object for handleProcessScreenshotPost
+        const processScreenshotReq = new Request('http://dummy/process-screenshot', {
+          method: 'POST',
+          headers: { 'X-API-Key': env.API_ACCESS_KEY }, // Content-Type is set by FormData
+          body: formData,
+        }) as unknown as CfRequest;
+
+        const processScreenshotRes = await handleProcessScreenshotPost(processScreenshotReq, env);
+
+        if (!processScreenshotRes.ok) {
+          const err = await processScreenshotRes.text();
+          return json({ ok: false, error: 'Process screenshot error: ' + err }, 500);
+        }
+        
+        const screenshotData = await processScreenshotRes.json() as ProcessedScreenshotResponse;
+
+        // 3. Save to Notion
         const notionReqBody = {
-          title: summary.title,
-          summary: summary.summary,
+          title: screenshotData.title,
+          summary: screenshotData.summary,
           source: 'screenshot',
+          uploadId: screenshotData.uploadId,
         };
         const notionReq = new Request('http://dummy/save-to-notion', {
           method: 'POST',
