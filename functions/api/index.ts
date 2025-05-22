@@ -8,6 +8,9 @@ import { Env as ProcessScreenshotEnv } from './process-screenshot';
 import { handleSaveToNotionPost } from './save-to-notion';
 import { Env as SaveToNotionEnv } from './save-to-notion';
 
+import ingestWorker from './ingest'; // Import the default export from ingest.ts
+import { Env as IngestEnv } from './ingest'; // Import the Env type from ingest.ts
+
 import type { Request as CfRequest, ExecutionContext, KVNamespace } from '@cloudflare/workers-types';
 import { getAssetFromKV, NotFoundError, MethodNotAllowedError } from '@cloudflare/kv-asset-handler';
 
@@ -16,7 +19,7 @@ import manifestJSON from '__STATIC_CONTENT_MANIFEST';
 const assetManifest = JSON.parse(manifestJSON);
 
 // MyWorkerEnv combines Env types from all handlers.
-interface MyWorkerEnv extends ProcessUrlEnv, ProcessScreenshotEnv, SaveToNotionEnv { 
+interface MyWorkerEnv extends ProcessUrlEnv, ProcessScreenshotEnv, SaveToNotionEnv, IngestEnv { 
   __STATIC_CONTENT: KVNamespace; // Correctly typed here
   [key: string]: unknown;
 }
@@ -40,6 +43,22 @@ export default {
         return await handleProcessScreenshotPost(request, env);
       } else if (url.pathname === '/api/save-to-notion') {
         return await handleSaveToNotionPost(request, env);
+      }
+      // Add new route for /api/ingest
+      else if (url.pathname === '/api/ingest') {
+        // Ensure ingestWorker has a fetch method and it's called correctly
+        if (ingestWorker && typeof ingestWorker.fetch === 'function') {
+          // Pass the ExecutionContext (ctx) if the ingestWorker's fetch expects it
+          // Assuming ingestWorker.fetch matches the standard Worker signature: (request, env, ctx?)
+          // If ingest.ts's fetch doesn't use ctx, it will simply ignore it.
+          // Corrected: Call fetch with 2 arguments as defined in ingest.ts
+          // Cast the result to Response to match the expected return type of the main fetch handler.
+          const ingestResponse = await ingestWorker.fetch(request, env);
+          return ingestResponse as unknown as Response; // Cast to align with the outer fetch signature
+        } else {
+          console.error("[Worker] Ingest worker or its fetch method is not defined correctly.");
+          return new Response("Internal Server Error: Ingest handler misconfiguration", { status: 500 });
+        }
       }
     } catch (e) {
       console.error("Error in API routing:", e);
