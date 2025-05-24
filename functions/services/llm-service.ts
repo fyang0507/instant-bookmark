@@ -42,7 +42,10 @@ export async function generateContentForScreenshot(
       messages: [
         {
           role: "system",
-          content: "You are an AI assistant. Reply ONLY with a JSON object that has two keys: 'title' (string, concise, max 10 words) and 'summary' (string, short, max 50 words). Use the original language of the image if it contains text."
+          content: `You are an AI assistant.
+Reply ONLY with a JSON object that has two keys: 'title' (string, concise, max 10 words) and 'summary' (string, short, max 50 words).
+If the image is a screenshot of a webpage or a document that contains title, the title should be directly extracted.
+Use the original language of the image if it contains text.`
         },
         {
           role: "user",
@@ -139,7 +142,11 @@ export async function generateTitleAndSummaryForText(
       messages: [
         {
           role: 'system',
-          content: "You are an AI assistant. You are given a text from a webpage, your task is to generate a title and summary for the text. Reply ONLY with a JSON object that has two keys: 'title' (string, concise, max 10 words) and 'summary' (string, roughly 50 words). Focus on the main content of the provided text, which is from a webpage. Use the original language of the text."
+          content: `You are an AI assistant.
+You are given a text from a webpage, your task is to generate a title and summary for the text.
+Reply ONLY with a JSON object that has two keys: 'title' (string, concise, max 10 words) and 'summary' (string, roughly 50 words).
+Focus on the main content of the provided text. If the webpage already has a title, the title should be directly extracted.
+Use the original language of the text.`
         },
         {
           role: 'user',
