@@ -20,7 +20,7 @@ This Raycast extension allows you to quickly save URLs and screenshots to Instan
     ```bash
     npm run build
     ```
-5.  **Open Raycast preferences, go to Extensions, and click the "+" button to add an extension. Select the `instant-bookmark/clients/raycast-extension` directory.**
+5.  **Open Raycast type "Import Extension". Select the `instant-bookmark/clients/raycast-extension` directory.**
 
 ## Configuration
 
