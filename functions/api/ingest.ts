@@ -31,6 +31,29 @@ interface IngestBody {
   summary?: string;
 }
 
+// Helper function to create a File object from a buffer
+function createImageFileFromBuffer(buffer: Uint8Array, clientFilename?: string): File {
+  let filename = clientFilename;
+  if (!filename || filename.trim() === '') {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(today.getDate()).padStart(2, '0');
+    filename = `temp_${year}-${month}-${day}.png`; // Default filename
+  }
+
+  // Ensure filename has an extension, default to .png if not.
+  // This is a good practice though Cloudflare Images might also infer/set type.
+  if (!/\.[^/.]+$/.test(filename)) {
+      filename += '.png';
+  }
+
+  // For now, we assume 'image/png'. This could be made more dynamic if needed.
+  // For example, by trying to infer from the filename extension or a separate mimeType parameter.
+  const mimeType = 'image/png'; 
+  return new File([buffer], filename, { type: mimeType });
+}
+
 // Use CfResponse and CfHeaders for consistency with other CF-typed functions
 function json(data: unknown, status = 200): CfResponse {
   return new Response(
@@ -82,22 +105,23 @@ export default {
       }
     }
 
-    // --- Handle URL ingest ---
-    if (body.type === 'url' && body.url) {
+    // --- Handle ingest based on type ---
+    if (body.type === 'url') {
+      if (!body.url) {
+        return json({ ok: false, error: 'URL (url) is required when type is "url"' }, 400);
+      }
+      // All URL-specific logic (try-catch block) goes here
       try {
         let title = body.title;
         let summary = body.summary;
 
-        if (body.autoGenerate) { // autoGenerate is now a required boolean
-          // 1. Extract text from URL
+        if (body.autoGenerate) {
           const allText = await generateContentForUrl(body.url);
-          // 2. Summarize
           const generatedSummary = await generateTitleAndSummaryForText(allText, env);
-          title = title || generatedSummary.title; // Use provided title if available, otherwise use generated
-          summary = summary || generatedSummary.summary; // Use provided summary if available, otherwise use generated
+          title = title || generatedSummary.title;
+          summary = summary || generatedSummary.summary;
         }
 
-        // 3. Save to Notion
         const notionReqBody = {
           title: title,
           summary: summary,
@@ -105,12 +129,11 @@ export default {
           url: body.url,
           thoughts: body.thoughts,
         };
-        // Construct a new Request object that is compliant with CfRequest for handleSaveToNotionPost
         const notionReq = new Request('http://dummy/save-to-notion', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-API-Key': env.API_ACCESS_KEY },
           body: JSON.stringify(notionReqBody),
-        }) as unknown as CfRequest; // Force cast via unknown
+        }) as unknown as CfRequest;
 
         const notionRes = await handleSaveToNotionPost(notionReq, env);
         if (!notionRes.ok) {
@@ -121,51 +144,41 @@ export default {
       } catch (e) {
         return json({ ok: false, error: (e instanceof Error ? e.message : String(e)) }, 500);
       }
-    }
-
-    // --- Handle image ingest ---
-    if (body.type === 'image' && body.filename && body.data_b64) {
+    } else if (body.type === 'image') {
+      if (!body.data_b64) {
+        return json({ ok: false, error: 'Base64 image data (data_b64) is required when type is "image"' }, 400);
+      }
+      // All Image-specific logic (try-catch block) goes here
       try {
         let title = body.title;
         let summary = body.summary;
 
-        // 1. Convert base64 to File
         const buffer = Uint8Array.from(atob(body.data_b64), c => c.charCodeAt(0));
-        const file = new File([buffer], body.filename, { type: 'image/png' }); // Assuming PNG, adjust if other types are possible
+        const file = createImageFileFromBuffer(buffer, body.filename);
 
-        // 2. Process screenshot (uploads to Cloudflare Images and generates summary if needed)
         const formData = new FormData();
         formData.append('file', file);
-        
-        // Pass autoGenerate, title, and summary to process-screenshot
-        // process-screenshot expects autoGenerate as a string 'true' or 'false'
-        formData.append('autoGenerate', body.autoGenerate.toString()); 
+        formData.append('autoGenerate', body.autoGenerate.toString());
 
         if (!body.autoGenerate) {
           if (title) {
             formData.append('manualTitle', title);
           } else {
-            // If autoGenerate is false, and no title is provided, this is an issue.
-            // process-screenshot will handle this error, but good to be aware.
             console.warn("[ingest.ts] autoGenerate is false, but no title provided for image.");
           }
           if (summary) {
             formData.append('manualSummary', summary);
           } else {
-            // If autoGenerate is false, and no summary is provided, this is an issue.
             console.warn("[ingest.ts] autoGenerate is false, but no summary provided for image.");
           }
         } else {
-          // If auto-generating, still pass title/summary if provided, 
-          // process-screenshot might use them as a fallback or hint (though current version doesn't)
-          if (title) formData.append('manualTitle', title); 
+          if (title) formData.append('manualTitle', title);
           if (summary) formData.append('manualSummary', summary);
         }
 
-        // Construct a new Request object for handleProcessScreenshotPost
         const processScreenshotReq = new Request('http://dummy/process-screenshot', {
           method: 'POST',
-          headers: { 'X-API-Key': env.API_ACCESS_KEY }, // Content-Type is set by FormData
+          headers: { 'X-API-Key': env.API_ACCESS_KEY },
           body: formData,
         }) as unknown as CfRequest;
 
@@ -177,16 +190,14 @@ export default {
         }
         
         const screenshotData = await processScreenshotRes.json() as ProcessedScreenshotResponse;
-        const uploadId = screenshotData.uploadId; // Assign as const
+        const uploadId = screenshotData.uploadId;
 
-        // Update title and summary if they were generated or passed through
-        title = screenshotData.title; 
+        title = screenshotData.title;
         summary = screenshotData.summary;
 
-        // 3. Save to Notion
         const notionReqBody = {
-          title: title, // Use the title from screenshotData (either generated or passed through)
-          summary: summary, // Use the summary from screenshotData
+          title: title,
+          summary: summary,
           source: 'screenshot',
           uploadId: uploadId,
           thoughts: body.thoughts,
@@ -195,7 +206,7 @@ export default {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-API-Key': env.API_ACCESS_KEY },
           body: JSON.stringify(notionReqBody),
-        }) as unknown as CfRequest; // Force cast via unknown
+        }) as unknown as CfRequest;
 
         const notionRes = await handleSaveToNotionPost(notionReq, env);
         if (!notionRes.ok) {
@@ -206,8 +217,9 @@ export default {
       } catch (e) {
         return json({ ok: false, error: (e instanceof Error ? e.message : String(e)) }, 500);
       }
+    } else {
+      // This catches cases where type is missing, or is an unsupported value like 'video', null, etc.
+      return json({ ok: false, error: 'Invalid or missing "type" in payload. Must be "url" or "image".' }, 400);
     }
-
-    return json({ ok: false, error: 'Bad payload' }, 400);
   }
 };
