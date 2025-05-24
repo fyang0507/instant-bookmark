@@ -72,6 +72,16 @@ export default {
       return json({ ok: false, error: 'Invalid JSON' }, 400);
     }
 
+    // --- Validate autoGenerate, title, and summary ---
+    if (body.autoGenerate === false) {
+      if (!body.title || body.title.trim() === '') {
+        return json({ ok: false, error: 'Title is required and cannot be empty when autoGenerate is false' }, 400);
+      }
+      if (!body.summary || body.summary.trim() === '') {
+        return json({ ok: false, error: 'Summary is required and cannot be empty when autoGenerate is false' }, 400);
+      }
+    }
+
     // --- Handle URL ingest ---
     if (body.type === 'url' && body.url) {
       try {
