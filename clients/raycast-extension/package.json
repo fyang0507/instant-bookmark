@@ -1,0 +1,49 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "instant-bookmark",
+  "title": "Instant-Bookmark",
+  "description": "https://github.com/fyang0507/instant-bookmark",
+  "icon": "extension-icon.png",
+  "author": "runtong_yang",
+  "license": "MIT",
+  "preferences": [
+    {
+      "name": "apiKey",
+      "title": "API Key",
+      "description": "Your Instant Bookmark API Key",
+      "type": "password",
+      "required": true
+    }
+  ],
+  "commands": [
+    {
+      "name": "instant-bookmark",
+      "title": "Instant Bookmark",
+      "description": "Instant Bookmark is a service to quickly save URLs and screenshots to Notion, with support for web, iOS Shortcuts, and Raycast. It leverages Cloudflare Workers for backend processing and a Vite-based React frontend.",
+      "mode": "view",
+      "arguments": []
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.98.5",
+    "@raycast/utils": "^1.17.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^2.0.4",
+    "@types/node": "22.13.10",
+    "@types/react": "19.0.10",
+    "@types/node-fetch": "^2.6.11",
+    "eslint": "^9.22.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
+  },
+  "scripts": {
+    "build": "npx @raycast/api build",
+    "dev": "npx @raycast/api develop",
+    "fix-lint": "npx @raycast/api lint --fix",
+    "lint": "npx @raycast/api lint",
+    "prepublishOnly": "echo \"\\n\\nIt seems like you are trying to publish the Raycast extension to npm.\\n\\nIf you did intend to publish it to npm, remove the \\`prepublishOnly\\` script and rerun \\`npm publish\\` again.\\nIf you wanted to publish it to the Raycast Store instead, use \\`npm run publish\\` instead.\\n\\n\" && exit 1",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}
