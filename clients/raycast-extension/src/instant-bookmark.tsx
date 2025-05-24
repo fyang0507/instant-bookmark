@@ -22,7 +22,6 @@ import os from "os"; // For tmpdir
 interface IngestBase {
   type: 'url' | 'image';
   url?: string;
-  filename?: string;
   data_b64?: string;
   thoughts?: string;
 }
@@ -138,7 +137,7 @@ async function handleClipboardImage(push: (view: React.ReactElement) => void) {
         await showToast(Toast.Style.Animated, "Processing Image File...", `Found file: ${path.basename(imagePath)}`);
         const data = await readFile(imagePath);
         const base64Data = data.toString("base64");
-        push(<AddThoughtsForm baseImageData={{ type: "image", filename: path.basename(imagePath), data_b64: base64Data }} />);
+        push(<AddThoughtsForm baseImageData={{ type: "image", data_b64: base64Data }} />);
         return;
       } else {
         await showToast(
@@ -178,7 +177,7 @@ async function handleClipboardImage(push: (view: React.ReactElement) => void) {
       try {
         const data = await readFile(tempImagePath);
         const base64Data = data.toString("base64");
-        push(<AddThoughtsForm baseImageData={{ type: "image", filename: tempImageFilename, data_b64: base64Data }} />);
+        push(<AddThoughtsForm baseImageData={{ type: "image", data_b64: base64Data }} />);
       } catch (readError) {
         console.error("Error reading temp image file:", readError);
         await showToast(Toast.Style.Failure, "Read Error", "Could not read the temporary image file.");
@@ -284,7 +283,6 @@ function SaveImageForm() {
       if (autoGenerate) {
         payload = {
           type: "image",
-          filename: path.basename(selectedPath),
           data_b64: base64Data,
           thoughts: values.thoughts,
           autoGenerate: true,
@@ -296,7 +294,6 @@ function SaveImageForm() {
         }
         payload = {
           type: "image",
-          filename: path.basename(selectedPath),
           data_b64: base64Data,
           thoughts: values.thoughts,
           autoGenerate: false,
@@ -344,7 +341,6 @@ function SaveImageForm() {
 interface AddThoughtsFormProps {
   baseImageData: {
     type: "image";
-    filename: string;
     data_b64: string;
   };
 }
