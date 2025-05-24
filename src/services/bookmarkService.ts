@@ -19,9 +19,14 @@ export const processUrl = async (url: string): Promise<{ title: string; summary:
 };
 
 // Process screenshot to generate title and content
-export const processScreenshot = async (file: File): Promise<{ title: string; summary: string; uploadId?: string; }> => {
+export const processScreenshot = async (file: File, autoGenerate: boolean, manualTitle?: string, manualSummary?: string): Promise<{ title: string; summary: string; uploadId?: string; }> => {
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('autoGenerate', String(autoGenerate));
+  if (!autoGenerate && manualTitle && manualSummary) {
+    formData.append('manualTitle', manualTitle);
+    formData.append('manualSummary', manualSummary);
+  }
 
   const response = await fetch('/api/process-screenshot', {
     method: 'POST',

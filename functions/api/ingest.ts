@@ -26,6 +26,9 @@ interface IngestBody {
   filename?: string;
   data_b64?: string;
   thoughts?: string;
+  autoGenerate: boolean;
+  title?: string;
+  summary?: string;
 }
 
 // Use CfResponse and CfHeaders for consistency with other CF-typed functions
@@ -72,14 +75,22 @@ export default {
     // --- Handle URL ingest ---
     if (body.type === 'url' && body.url) {
       try {
-        // 1. Extract text from URL
-        const allText = await generateContentForUrl(body.url);
-        // 2. Summarize
-        const summary = await generateTitleAndSummaryForText(allText, env);
+        let title = body.title;
+        let summary = body.summary;
+
+        if (body.autoGenerate) { // autoGenerate is now a required boolean
+          // 1. Extract text from URL
+          const allText = await generateContentForUrl(body.url);
+          // 2. Summarize
+          const generatedSummary = await generateTitleAndSummaryForText(allText, env);
+          title = title || generatedSummary.title; // Use provided title if available, otherwise use generated
+          summary = summary || generatedSummary.summary; // Use provided summary if available, otherwise use generated
+        }
+
         // 3. Save to Notion
         const notionReqBody = {
-          title: summary.title,
-          summary: summary.summary,
+          title: title,
+          summary: summary,
           source: 'url',
           url: body.url,
           thoughts: body.thoughts,
@@ -105,13 +116,41 @@ export default {
     // --- Handle image ingest ---
     if (body.type === 'image' && body.filename && body.data_b64) {
       try {
+        let title = body.title;
+        let summary = body.summary;
+
         // 1. Convert base64 to File
         const buffer = Uint8Array.from(atob(body.data_b64), c => c.charCodeAt(0));
-        const file = new File([buffer], body.filename, { type: 'image/png' });
-        
-        // 2. Process screenshot (uploads to Notion and generates summary)
+        const file = new File([buffer], body.filename, { type: 'image/png' }); // Assuming PNG, adjust if other types are possible
+
+        // 2. Process screenshot (uploads to Cloudflare Images and generates summary if needed)
         const formData = new FormData();
         formData.append('file', file);
+        
+        // Pass autoGenerate, title, and summary to process-screenshot
+        // process-screenshot expects autoGenerate as a string 'true' or 'false'
+        formData.append('autoGenerate', body.autoGenerate.toString()); 
+
+        if (!body.autoGenerate) {
+          if (title) {
+            formData.append('manualTitle', title);
+          } else {
+            // If autoGenerate is false, and no title is provided, this is an issue.
+            // process-screenshot will handle this error, but good to be aware.
+            console.warn("[ingest.ts] autoGenerate is false, but no title provided for image.");
+          }
+          if (summary) {
+            formData.append('manualSummary', summary);
+          } else {
+            // If autoGenerate is false, and no summary is provided, this is an issue.
+            console.warn("[ingest.ts] autoGenerate is false, but no summary provided for image.");
+          }
+        } else {
+          // If auto-generating, still pass title/summary if provided, 
+          // process-screenshot might use them as a fallback or hint (though current version doesn't)
+          if (title) formData.append('manualTitle', title); 
+          if (summary) formData.append('manualSummary', summary);
+        }
 
         // Construct a new Request object for handleProcessScreenshotPost
         const processScreenshotReq = new Request('http://dummy/process-screenshot', {
@@ -128,13 +167,18 @@ export default {
         }
         
         const screenshotData = await processScreenshotRes.json() as ProcessedScreenshotResponse;
+        const uploadId = screenshotData.uploadId; // Assign as const
+
+        // Update title and summary if they were generated or passed through
+        title = screenshotData.title; 
+        summary = screenshotData.summary;
 
         // 3. Save to Notion
         const notionReqBody = {
-          title: screenshotData.title,
-          summary: screenshotData.summary,
+          title: title, // Use the title from screenshotData (either generated or passed through)
+          summary: summary, // Use the summary from screenshotData
           source: 'screenshot',
-          uploadId: screenshotData.uploadId,
+          uploadId: uploadId,
           thoughts: body.thoughts,
         };
         const notionReq = new Request('http://dummy/save-to-notion', {

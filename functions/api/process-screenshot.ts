@@ -9,6 +9,67 @@ export interface ProcessedScreenshotResponse extends LlmContentResponse { // Ext
   uploadId: string; 
 }
 
+// Helper function to upload file to Notion and get uploadId
+async function uploadFileToNotion(file: File, env: Env, notionVersion: string): Promise<{ uploadId: string }> {
+  // Step 1: Create Notion file upload (get upload URL and ID)
+  const createUploadPayload = {
+    name: file.name,
+    mime_type: file.type || 'application/octet-stream',
+    mode: 'single_part',
+  };
+  console.log(`[process-screenshot:uploadFileToNotion] Creating Notion file upload for ${file.name}...`, createUploadPayload);
+
+  const createUploadResponse = await fetch('https://api.notion.com/v1/file_uploads', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+      'Notion-Version': notionVersion,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(createUploadPayload),
+  });
+
+  if (!createUploadResponse.ok) {
+    const errorText = await createUploadResponse.text();
+    console.error('[process-screenshot:uploadFileToNotion] Notion create file upload failed:', createUploadResponse.status, errorText);
+    throw new Error(`Failed to initiate screenshot upload with Notion: ${errorText} (Status: ${createUploadResponse.status})`);
+  }
+
+  const uploadData = await createUploadResponse.json() as { id: string; upload_url: string; [key: string]: unknown };
+  const uploadId = uploadData.id;
+  const sendUrl = uploadData.upload_url;
+
+  if (!uploadId || !sendUrl) {
+    console.error('[process-screenshot:uploadFileToNotion] Notion create file upload response missing id or url:', uploadData);
+    throw new Error('Invalid response from Notion API when creating file upload.');
+  }
+  console.log(`[process-screenshot:uploadFileToNotion] Notion upload initiated. Upload ID: ${uploadId}, Send URL: ${sendUrl}`);
+
+  // Step 2: Send file bytes to the obtained URL
+  const fileFormData = new FormData();
+  fileFormData.append('file', file, file.name);
+  console.log(`[process-screenshot:uploadFileToNotion] Sending file bytes for ${file.name} to ${sendUrl}...`);
+
+  const sendFileResponse = await fetch(sendUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+      'Notion-Version': notionVersion,
+      // Content-Type for FormData is set by the browser/fetch automatically
+    },
+    body: fileFormData,
+  });
+
+  if (!sendFileResponse.ok) {
+    const errorText = await sendFileResponse.text();
+    console.error('[process-screenshot:uploadFileToNotion] Notion send file bytes failed:', sendFileResponse.status, errorText);
+    throw new Error(`Failed to send screenshot data to Notion: ${errorText} (Status: ${sendFileResponse.status})`);
+  }
+  
+  console.log(`[process-screenshot:uploadFileToNotion] File bytes sent successfully for ${uploadId}.`);
+  return { uploadId };
+}
+
 // New handler for standard Worker signature, accepting CfRequest, no ctx
 export async function handleProcessScreenshotPost(
   request: CfRequest,
@@ -34,6 +95,21 @@ export async function handleProcessScreenshotPost(
       const formData = await request.formData();
       const fileValue = formData.get('file'); // Use a different name to avoid conflict with global File
       
+      const autoGenerateStr = formData.get('autoGenerate') as string | null;
+      const isAutoGenerateEnabled = autoGenerateStr === 'true'; // Relies on client sending 'true' or 'false'
+      
+      let manualTitle: string | null = null;
+      let manualSummary: string | null = null;
+
+      if (!isAutoGenerateEnabled) {
+        manualTitle = formData.get('manualTitle') as string | null;
+        manualSummary = formData.get('manualSummary') as string | null;
+        if (!manualTitle || !manualSummary) {
+          console.error('[process-screenshot] Manual title or summary missing when autoGenerate is false.');
+          return new Response('Manual title and summary are required when auto-generation is disabled.', { status: 400 });
+        }
+      }
+      
       if (!fileValue || typeof fileValue === 'string' || 
           typeof (fileValue as File).name === 'undefined' || 
           typeof (fileValue as File).size === 'undefined') { 
@@ -42,71 +118,33 @@ export async function handleProcessScreenshotPost(
       
       const file = fileValue as File;
       
-      const createUploadPayload = {
-        name: file.name,
-        mime_type: file.type || 'application/octet-stream',
-        mode: 'single_part',
-      };
-
-      console.log(`[process-screenshot] Step 1: Creating Notion file upload for ${file.name}...`, createUploadPayload);
-
-      const createUploadResponse = await fetch('https://api.notion.com/v1/file_uploads', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${env.NOTION_API_KEY}`,
-          'Notion-Version': notionVersion,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(createUploadPayload),
-      });
-
-      if (!createUploadResponse.ok) {
-        const errorText = await createUploadResponse.text();
-        console.error('[process-screenshot] Notion create file upload failed:', createUploadResponse.status, errorText);
-        return new Response(`Failed to initiate screenshot upload with Notion: ${errorText}`, { status: createUploadResponse.status });
-      }
-
-      const uploadData = await createUploadResponse.json() as { id: string; upload_url: string; [key: string]: unknown };
-      const uploadId = uploadData.id;
-      const sendUrl = uploadData.upload_url;
-
-      if (!uploadId || !sendUrl) {
-        console.error('[process-screenshot] Notion create file upload response missing id or url:', uploadData);
-        return new Response('Invalid response from Notion API when creating file upload.', { status: 500 });
-      }
-
-      console.log(`[process-screenshot] Step 1 successful. Upload ID: ${uploadId}, Send URL: ${sendUrl}`);
-
-      const fileFormData = new FormData();
-      fileFormData.append('file', file, file.name);
-
-      console.log(`[process-screenshot] Step 2: Sending file bytes for ${file.name} to ${sendUrl}...`);
-
-      const sendFileResponse = await fetch(sendUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${env.NOTION_API_KEY}`,
-          'Notion-Version': notionVersion,
-        },
-        body: fileFormData,
-      });
-
-      if (!sendFileResponse.ok) {
-        const errorText = await sendFileResponse.text();
-        console.error('[process-screenshot] Notion send file bytes failed:', sendFileResponse.status, errorText);
-        return new Response(`Failed to send screenshot data to Notion: ${errorText}`, { status: sendFileResponse.status });
-      }
-      
-      console.log(`[process-screenshot] Step 2 successful. File bytes sent for ${uploadId}.`);
+      // --- Notion File Upload --- 
+      // This step is always performed if a file is present.
+      console.log(`[process-screenshot] Initiating Notion file upload for ${file.name}...`);
+      const { uploadId } = await uploadFileToNotion(file, env, notionVersion);
+      console.log(`[process-screenshot] Notion upload successful. Upload ID: ${uploadId}`);
+      // --- End Notion File Upload --- 
 
       // Call the LLM service to generate title and summary
-      console.log(`[process-screenshot] Step 3: Generating content for screenshot ${uploadId} using LLM service...`);
-      const llmContent = await generateContentForScreenshot(file, env);
-      console.log(`[process-screenshot] Step 3 successful. LLM content received for ${uploadId}.`);
+      let title: string;
+      let summary: string;
+
+      if (isAutoGenerateEnabled) {
+        console.log(`[process-screenshot] Step 3: Generating content for screenshot ${uploadId} using LLM service (autoGenerate=true)...`);
+        const llmContent = await generateContentForScreenshot(file, env);
+        title = llmContent.title;
+        summary = llmContent.summary;
+        console.log(`[process-screenshot] Step 3 successful. LLM content received for ${uploadId}.`);
+      } else {
+        console.log(`[process-screenshot] Step 3: Using manual title and summary for screenshot ${uploadId} (autoGenerate=false)...`);
+        title = manualTitle as string; // Already checked for null above
+        summary = manualSummary as string; // Already checked for null above
+        console.log(`[process-screenshot] Step 3 successful. Manual content set for ${uploadId}.`);
+      }
 
       const responseBody: ProcessedScreenshotResponse = {
-        title: llmContent.title,
-        summary: llmContent.summary,
+        title: title,
+        summary: summary,
         uploadId: uploadId,
       };
 
