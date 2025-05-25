@@ -63,104 +63,24 @@ Instant Bookmark is a service to quickly save URLs and screenshots to Notion, wi
 
 ### Prerequisites
 
-*   Node.js and npm 
-*   Install npm (recommended to install via `brew` use `brew install node`, if you don't have brew, follow [this guide](https://brew.sh/))
-*   Wrangler CLI: `npm install -g wrangler`
-*   A Notion account and an integration token (requested from [Notion dev portal](https://developers.notion.com/)).
-*   A Notion database set up for bookmarks, it needs to have the following attributes: Title (text), Status (default setting) and Tags (Multi-select).
+To get started, you need to prepare a Notion database that is accessible programmatically:
+*   A Notion account
+*   A Notion database set up for Instant Bookmark with the following attributes (case-sensitive):
+    - Title (rename the default Name column)
+    - Status (default setting)
+    - Tags (use Multi-select)
+![notion-db-setup](./docs/notion-db-setup.png)
 
-### Local Development Setup (skip to Deployment section if you don't want to change anything)
+* Notion integration token (requested from [Notion dev portal](https://developers.notion.com/)). Here's [the official guide](https://developers.notion.com/docs/create-a-notion-integration#getting-started) if you are unfamiliar with it, you only need to follow the #getting-started section and complete the page permission grant
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/fyang0507/instant-bookmark.git
-    cd instant-bookmark
-    ```
-
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-
-3.  **Configure Environment Variables:**
-
-    *   **For Cloudflare Functions (Backend):**
-        Create a `.dev.vars` file in the project root (and add it to `.gitignore`). This file will hold secrets for your local Cloudflare Functions development.
-        ```ini
-        NOTION_API_KEY=your_notion_api_key # request from: https://developers.notion.com/
-        NOTION_DATABASE_ID=your_notion_database_id # see this guide to retrieve the ID: https://developers.notion.com/reference/retrieve-a-database
-        API_ACCESS_KEY=your_secure_local_api_key_for_backend # generate yourself, e.g. you can use `openssl rand -hex 32`
-        OPENAI_API_KEY=your_openai_api_key # requested from https://platform.openai.com/
-        BROWSERLESS_TOKEN=your_browserless_token # sign up on https://www.browserless.io/ to get the token
-        ```
-
-    *   **For Vite Frontend:**
-        Create a `.env` file in the project root (and add it to `.gitignore`). This file will hold variables for your local Vite frontend development.
-        ```ini
-        VITE_API_ACCESS_KEY="your_secure_local_api_key_for_frontend" # Should be the same as API_ACCESS_KEY in .dev.vars
-        ```
-        **Note:** The `API_ACCESS_KEY` in `.dev.vars` and `VITE_API_ACCESS_KEY` in `.env` must be the same for the frontend to authenticate with the backend services.
-
-4.  **Run the development server:**
-    Wrangler is used to serve both the frontend and the Cloudflare Functions locally.
-    ```bash
-    wrangler pages dev -- npm run dev
-    ```
-    This command makes variables from `.dev.vars` available to your functions, and Vite uses variables from `.env` for the frontend. The application will typically be available at `http://localhost:5173/`.
-
-### API Authentication
-
-All backend Cloudflare Worker functions (under `functions/api/`) expect an `API_ACCESS_KEY` to be sent in the `X-API-Key` request header. The backend validates this key against the `API_ACCESS_KEY` secret defined in its environment. Requests with missing or invalid keys will be rejected.
-
-You can generate a secure API key for your application using OpenSSL: `openssl rand -hex 32`
-
-
-## Deployment to Cloudflare Workers
-
-1. **Prepare Your Repository**:
-   - Ensure your code is pushed to a GitHub repository (or you fork this repo to your account)
-
-2. **Deploy via Cloudflare Workers**:
-   - Go to [Cloudflare Dashboard](https://dash.cloudflare.com)
-   - Navigate to "Workers & Pages" in the sidebar
-   - Click "Create application"
-   - Select "Create Worker"
-   - Choose "Deploy from GitHub"
-   - Select your repository
-   - Configure build settings:
-     - Build command: `npm run build`
-     - Deploy command: `npx wrangler deploy`
-     - Path: `/`
-
-3. **Configure Environment Variables**:
-   - In your Worker's dashboard
-   - Go to "Settings" > "Variables"
-   - Add the following variables:
-      ```ini
-      NOTION_API_KEY=your_notion_api_key # request from: https://developers.notion.com/
-      NOTION_DATABASE_ID=your_notion_database_id # see this guide to retrieve the ID: https://developers.notion.com/reference/retrieve-a-database
-      API_ACCESS_KEY=your_secure_local_api_key_for_backend # generate yourself, e.g. you can use `openssl rand -hex 32`
-      OPENAI_API_KEY=your_openai_api_key # requested from https://platform.openai.com/
-      BROWSERLESS_TOKEN=your_browserless_token # sign up on https://www.browserless.io/ to get the token
-      ```
-   - Go to "Settings" > "Build" > "Variables and secrets"
-   - Add the following variables:
-     ```ini
-     VITE_API_ACCESS_KEY # the same as API_ACCESS_KEY, this ensures the Front End webpage can connect to the Back End API
-     ```
-
-4. **Verify Deployment**:
-   - Check the deployment status in the Workers dashboard
-   - Test all API endpoints with your API key
-   - Verify Notion integration is working
-   - Test URL processing and screenshot functionality
-
-Here's the reference for Cloudflare configuration.
-![cloudflare-config](public/cloudflare-configuration.png)
-
+### Choose your setup path:
+*   For local development (if you want to continue the development and make changes), see [LOCAL_DEVELOPMENT.md](./docs/LOCAL_DEVELOPMENT.md)
+*   For deployment (if you just want this to work), see [DEPLOYMENT.md](./docs/DEPLOYMENT.md)
 
 ## iOS Shortcut and Raycast Integrations
 See README.md from clients/ folder to set up the integrations
+*   [iOS Shortcut Integration](./clients/ios-shortcut/README.md)
+*   [Raycast Extension Integration](./clients/raycast/README.md)
 
 ## Backend API Endpoints
 
