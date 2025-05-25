@@ -87,11 +87,11 @@ Instant Bookmark is a service to quickly save URLs and screenshots to Notion, wi
     *   **For Cloudflare Functions (Backend):**
         Create a `.dev.vars` file in the project root (and add it to `.gitignore`). This file will hold secrets for your local Cloudflare Functions development.
         ```ini
-        NOTION_API_KEY="your_notion_api_key" # request from: https://developers.notion.com/
-        NOTION_DATABASE_ID="your_notion_database_id" # see this guide to retrieve the ID: https://developers.notion.com/reference/retrieve-a-database
-        API_ACCESS_KEY="your_secure_local_api_key_for_backend" # generate yourself, e.g. you can use `openssl rand -hex 32`
-        OPENAI_API_KEY="your_openai_api_key" # requested from https://platform.openai.com/
-        BROWSERLESS_TOKEN="your_browserless_token" # sign up on https://www.browserless.io/ to get the token
+        NOTION_API_KEY=your_notion_api_key # request from: https://developers.notion.com/
+        NOTION_DATABASE_ID=your_notion_database_id # see this guide to retrieve the ID: https://developers.notion.com/reference/retrieve-a-database
+        API_ACCESS_KEY=your_secure_local_api_key_for_backend # generate yourself, e.g. you can use `openssl rand -hex 32`
+        OPENAI_API_KEY=your_openai_api_key # requested from https://platform.openai.com/
+        BROWSERLESS_TOKEN=your_browserless_token # sign up on https://www.browserless.io/ to get the token
         ```
 
     *   **For Vite Frontend:**
@@ -136,13 +136,13 @@ You can generate a secure API key for your application using OpenSSL: `openssl r
    - In your Worker's dashboard
    - Go to "Settings" > "Variables"
    - Add the following variables:
-     ```ini
-     NOTION_API_KEY  # request from: https://developers.notion.com/
-     NOTION_DATABASE_ID # see this guide to retrieve the ID: https://developers.notion.com/reference/retrieve-a-database
-     API_ACCESS_KEY  # generate yourself, e.g. you can use `openssl rand -hex 32`
-     OPENAI_API_KEY # requested from https://platform.openai.com/
-     BROWSERLESS_TOKEN # sign up on https://www.browserless.io/ to get the token
-     ```
+      ```ini
+      NOTION_API_KEY=your_notion_api_key # request from: https://developers.notion.com/
+      NOTION_DATABASE_ID=your_notion_database_id # see this guide to retrieve the ID: https://developers.notion.com/reference/retrieve-a-database
+      API_ACCESS_KEY=your_secure_local_api_key_for_backend # generate yourself, e.g. you can use `openssl rand -hex 32`
+      OPENAI_API_KEY=your_openai_api_key # requested from https://platform.openai.com/
+      BROWSERLESS_TOKEN=your_browserless_token # sign up on https://www.browserless.io/ to get the token
+      ```
    - Go to "Settings" > "Build" > "Variables and secrets"
    - Add the following variables:
      ```ini
