@@ -63,7 +63,8 @@ Instant Bookmark is a service to quickly save URLs and screenshots to Notion, wi
 
 ### Prerequisites
 
-*   Node.js and npm
+*   Node.js and npm 
+*   Install npm (recommended to install via `brew` use `brew install node`, if you don't have brew, follow [this guide](https://brew.sh/))
 *   Wrangler CLI: `npm install -g wrangler`
 *   A Notion account and an integration token (requested from [Notion dev portal](https://developers.notion.com/)).
 *   A Notion database set up for bookmarks, it needs to have the following attributes: Title (text), Status (default setting) and Tags (Multi-select).
