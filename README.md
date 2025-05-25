@@ -26,22 +26,22 @@
 
 Instant Bookmark is a service to quickly save URLs and screenshots to Notion, with support for web, iOS Shortcuts, and Raycast. It leverages Cloudflare Workers for backend processing and a Vite-based React frontend.
 
-## Demo Videos
+## Demo
 
 <details>
   <summary>Watch Demo Videos</summary>
   
-  ### Web URL Saving
-  <video controls src="./public/web-url.mp4" width="600"></video>
-  
-  ### iOS Shortcut - Web URL
-  <video controls src="./public/shortcut-web.mp4" width="600"></video>
+  ### Raycast - Image
+  <video controls src="https://github.com/user-attachments/assets/a20ce3b3-37a6-4a1d-a00c-e92ebee2b789" width="600"></video>
   
   ### iOS Shortcut - Screenshot
-  <video controls src="./public/shortcut-screenshot.mp4" width="600"></video>
+  <video controls src="https://github.com/user-attachments/assets/77164d27-2f7b-46ae-9c2c-a3878a5ebcb1" width="600"></video>
   
-  ### Raycast - Image
-  <video controls src="./public/raycast-image.mp4" width="600"></video>
+  ### iOS Shortcut - Web URL
+  <video controls src="https://github.com/user-attachments/assets/3313cd82-6712-4647-b55a-2998c6751aa8" width="600"></video>
+  
+  ### Web UI - URL Saving
+  <video controls src="https://github.com/user-attachments/assets/8a19c0b5-7abd-4e4a-9153-dbcf21f378d8" width="600"></video>
 </details>
 
 ## Tech Stack
