@@ -35,7 +35,7 @@ const HomePage: React.FC = () => {
           </div>
           <h3 className="text-xl font-semibold mb-2">Screenshot Capture</h3>
           <p className="text-gray-600 dark:text-gray-400">
-            Upload screenshots and our AI will analyze the content and create a searchable bookmark.
+            Upload screenshots and AI will analyze the content and create a searchable bookmark.
           </p>
         </div>
         

@@ -1,30 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Card, { CardContent, CardHeader } from '../components/ui/Card';
-import Input from '../components/ui/Input';
-import Button from '../components/ui/Button';
-import { Moon, Sun, Key, RefreshCw } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
-import { useToast } from '../components/ui/Toast';
 
 const SettingsPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
-  const [notionDatabaseUrl, setNotionDatabaseUrl] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-  const toast = useToast();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-    
-    try {
-      localStorage.setItem('notionDatabaseUrl', notionDatabaseUrl);
-      toast.success('Settings saved successfully');
-    } catch (error) {
-      toast.error('Failed to save settings');
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -82,44 +62,14 @@ const SettingsPage: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <div className="flex items-center">
-              <Key className="h-5 w-5 text-blue-500 mr-2" />
-              <h2 className="text-xl font-semibold">Notion Integration</h2>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <Input
-                label="Notion Database URL"
-                value={notionDatabaseUrl}
-                onChange={(e) => setNotionDatabaseUrl(e.target.value)}
-                placeholder="Enter your public Notion database URL"
-                fullWidth
-              />
-              
-              <div className="pt-4 flex justify-end">
-                <Button
-                  type="submit"
-                  isLoading={isSaving}
-                  disabled={!notionDatabaseUrl || isSaving}
-                >
-                  Save Settings
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
             <h2 className="text-xl font-semibold">About</h2>
           </CardHeader>
           <CardContent>
             <p className="text-gray-600 dark:text-gray-300">
-              Bookmark.io helps you save and organize content from around the web. Created with ❤️
+              Instant Bookmark helps you save and organize content from around the web. Created with ❤️ by <a href="https://github.com/fyang0507" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">Fred Yang</a>.
             </p>
             <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-              Version 1.0.0
+              Version 0.2.1
             </p>
           </CardContent>
         </Card>

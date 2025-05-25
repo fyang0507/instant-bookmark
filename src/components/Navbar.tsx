@@ -10,7 +10,6 @@ const Navbar: React.FC = () => {
 
   const navLinks = [
     { path: '/', name: 'Home', icon: <Home className="w-5 h-5" /> },
-    { path: '/bookmarks', name: 'Bookmarks', icon: <Bookmark className="w-5 h-5" /> },
     { path: '/settings', name: 'Settings', icon: <Settings className="w-5 h-5" /> },
   ];
 
