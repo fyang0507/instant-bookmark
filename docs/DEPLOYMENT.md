@@ -7,8 +7,8 @@
      - Follow [local development guide](LOCAL_DEVELOPMENT.md), create your own, and publish to your account
 
 2. **Deploy via Cloudflare Workers**:
-   - Go to [Cloudflare Dashboard](https://dash.cloudflare.com)
-   - On the top right, click the "+Add" button
+   - Go to [Cloudflare Dashboard](https://dash.cloudflare.com) 
+   - On the top right, click the "+ Add" button
    - Select "Workers"
    - Choose "Import a repository"
      - You need to link your GitHub account first

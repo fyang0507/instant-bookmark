@@ -3,7 +3,6 @@ description:
 globs: 
 alwaysApply: true
 ---
-\
 # Project Structure Overview
 
 This project is a Vite-based React application built with TypeScript and styled with Tailwind CSS. It also includes a directory for serverless functions.
@@ -25,6 +24,14 @@ This project is a Vite-based React application built with TypeScript and styled 
     *   **`functions/types/`**: Stores TypeScript type definitions and interfaces for the serverless functions.
 *   **`.bolt/`**: Configuration or operational directory, possibly related to a specific toolchain or deployment process.
 *   **`.wrangler/`**: Configuration and state directory for Wrangler, the command-line tool for Cloudflare Workers.
+*   **[`public/`](mdc:public)**: Contains static assets like images or fonts that are copied to the build output directory.
+*   **[`clients/`](mdc:clients)**: Contains code for different client applications.
+    *   **[`clients/ios-shortcut/`](mdc:clients/ios-shortcut)**: Code for the iOS Shortcut client.
+    *   **[`clients/raycast-extension/`](mdc:clients/raycast-extension)**: Code for the Raycast Extension client.
+*   **[`docs/`](mdc:docs)**: Contains project documentation.
+*   **[`extension/`](mdc:extension)**: Contains code for a browser extension.
+    *   **[`extension/assets/`](mdc:extension/assets)**: Assets for the browser extension.
+    *   **[`extension/src/`](mdc:extension/src)**: Source code for the browser extension.
 
 ## Important Files in `src/`
 
@@ -46,6 +53,11 @@ This project is a Vite-based React application built with TypeScript and styled 
 *   **`.env`**: General environment variables.
 *   **`.gitignore`**: Specifies intentionally untracked files that Git should ignore.
 *   **[`README.md`](mdc:README.md)**: Project documentation.
+*   **[`wrangler.toml`](mdc:wrangler.toml)**: Configuration file for Wrangler, the CLI for Cloudflare Workers.
+*   **[`vitest.setup.ts`](mdc:vitest.setup.ts)**: Setup file for Vitest, a Vite-native testing framework.
+*   **`package-lock.json`**: Records the exact versions of dependencies used by the project.
+*   **`.npmrc`**: Configuration file for the npm package manager.
+*   **[`LICENSE`](mdc:LICENSE)**: Contains the software license for the project.
 
 ## Development Workflow
 

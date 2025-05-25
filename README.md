@@ -69,7 +69,7 @@ To get started, you need to prepare a Notion database that is accessible program
     - Title (rename the default Name column)
     - Status (default setting)
     - Tags (use Multi-select)
-![notion-db-setup](./docs/notion-db-setup.png)
+![notion-db-setup](./docs/notion-db-setup.png) 
 
 * Notion integration token (requested from [Notion dev portal](https://developers.notion.com/)). Here's [the official guide](https://developers.notion.com/docs/create-a-notion-integration#getting-started) if you are unfamiliar with it, you only need to follow the #getting-started section and complete the page permission grant
 
