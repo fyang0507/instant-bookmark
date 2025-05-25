@@ -4,7 +4,7 @@ This Raycast extension allows you to quickly save URLs and screenshots to Instan
 
 ## Installation
 
-1.  **Clone the repository:**
+1.  **Clone the repository:** (you may already did this if you have local development env set up)
     ```bash
     git clone https://github.com/fyang0507/instant-bookmark.git
     ```
@@ -28,26 +28,7 @@ Before using the extension, you need to configure your API key:
 
 1.  Open Raycast and type "Instant Bookmark".
 2.  Press `⌘ + ,` or `cmd + ,` to open the extension preferences.
-3.  Enter your Instant Bookmark API Key in the "API Key" field.
-
-## Usage
-
-### Save a URL
-
-1.  Open Raycast and type "Instant Bookmark".
-2.  The extension will attempt to pre-fill the URL from your clipboard or the frontmost browser tab.
-3.  Optionally, add any thoughts or notes about the URL.
-4.  Press Enter to save the bookmark.
-
-### Save a Screenshot
-
-1.  Take a screenshot.
-2.  Open Raycast and type "Instant Bookmark".
-3.  The extension will detect the image in your clipboard.
-4.  Optionally, add any thoughts or notes about the screenshot.
-5.  Press Enter to save the screenshot.
-
-Alternatively, you can directly use the "Save Image" command if it appears after typing "Instant Bookmark", which will specifically look for an image in your clipboard.
+3.  (Only for the first time) Enter your Instant Bookmark API Key in the "API Key" field.
 
 ## Development
 

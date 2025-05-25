@@ -63,12 +63,12 @@ Instant Bookmark is a service to quickly save URLs and screenshots to Notion, wi
 
 ### Prerequisites
 
-*   Node.js and npm (or yarn)
-*   Wrangler CLI: `npm install -g wrangler` (or `yarn global add wrangler`)
+*   Node.js and npm
+*   Wrangler CLI: `npm install -g wrangler`
 *   A Notion account and an integration token (requested from [Notion dev portal](https://developers.notion.com/)).
-*   A Notion database set up for bookmarks.
+*   A Notion database set up for bookmarks, it needs to have the following attributes: Title (text), Status (default setting) and Tags (Multi-select).
 
-### Local Development Setup
+### Local Development Setup (skip to Deployment section if you don't want to change anything)
 
 1.  **Clone the repository:**
     ```bash
@@ -86,11 +86,11 @@ Instant Bookmark is a service to quickly save URLs and screenshots to Notion, wi
     *   **For Cloudflare Functions (Backend):**
         Create a `.dev.vars` file in the project root (and add it to `.gitignore`). This file will hold secrets for your local Cloudflare Functions development.
         ```ini
-        NOTION_API_KEY="your_notion_api_key"
-        NOTION_DATABASE_ID="your_notion_database_id"
-        API_ACCESS_KEY="your_secure_local_api_key_for_backend"
-        OPENAI_API_KEY="your_openai_api_key" 
-        BROWSERLESS_TOKEN="your_browserless_token"
+        NOTION_API_KEY="your_notion_api_key" # request from: https://developers.notion.com/
+        NOTION_DATABASE_ID="your_notion_database_id" # see this guide to retrieve the ID: https://developers.notion.com/reference/retrieve-a-database
+        API_ACCESS_KEY="your_secure_local_api_key_for_backend" # generate yourself, e.g. you can use `openssl rand -hex 32`
+        OPENAI_API_KEY="your_openai_api_key" # requested from https://platform.openai.com/
+        BROWSERLESS_TOKEN="your_browserless_token" # sign up on https://www.browserless.io/ to get the token
         ```
 
     *   **For Vite Frontend:**
@@ -117,8 +117,7 @@ You can generate a secure API key for your application using OpenSSL: `openssl r
 ## Deployment to Cloudflare Workers
 
 1. **Prepare Your Repository**:
-   - Ensure your code is pushed to a GitHub repository
-   - Verify your `package.json` has the correct build script and dependencies
+   - Ensure your code is pushed to a GitHub repository (or you fork this repo to your account)
 
 2. **Deploy via Cloudflare Workers**:
    - Go to [Cloudflare Dashboard](https://dash.cloudflare.com)
@@ -136,14 +135,18 @@ You can generate a secure API key for your application using OpenSSL: `openssl r
    - In your Worker's dashboard
    - Go to "Settings" > "Variables"
    - Add the following variables:
+     ```ini
+     NOTION_API_KEY  # request from: https://developers.notion.com/
+     NOTION_DATABASE_ID # see this guide to retrieve the ID: https://developers.notion.com/reference/retrieve-a-database
+     API_ACCESS_KEY  # generate yourself, e.g. you can use `openssl rand -hex 32`
+     OPENAI_API_KEY # requested from https://platform.openai.com/
+     BROWSERLESS_TOKEN # sign up on https://www.browserless.io/ to get the token
      ```
-     NOTION_API_KEY
-     NOTION_DATABASE_ID
-     API_ACCESS_KEY
-     OPENAI_API_KEY
-     BROWSERLESS_TOKEN
+   - Go to "Settings" > "Build" > "Variables and secrets"
+   - Add the following variables:
+     ```ini
+     VITE_API_ACCESS_KEY # the same as API_ACCESS_KEY, this ensures the Front End webpage can connect to the Back End API
      ```
-   - Click "Save"
 
 4. **Verify Deployment**:
    - Check the deployment status in the Workers dashboard
@@ -154,6 +157,9 @@ You can generate a secure API key for your application using OpenSSL: `openssl r
 Here's the reference for Cloudflare configuration.
 ![cloudflare-config](public/cloudflare-configuration.png)
 
+
+## iOS Shortcut and Raycast Integrations
+See README.md from clients/ folder to set up the integrations
 
 ## Backend API Endpoints
 

@@ -5,7 +5,7 @@ This document provides instructions on how to install and use the "Instant Bookm
 ## Prerequisites
 
 *   An iOS device (iPhone or iPad) running a version that supports the Shortcuts app.
-*   The `Instant-Bookmark.shortcut` file.
+*   The `Instant-Bookmark.shortcut` file in the same directory.
 *   The API endpoint configuration on Cloudflare
 
 ## Installation
@@ -23,11 +23,14 @@ This document provides instructions on how to install and use the "Instant Bookm
     *   After adding the shortcut, open the Shortcuts app.
     *   Find "Instant Bookmark" in your list of shortcuts.
     *   Tap the three dots (`...`) on the shortcut to open its editor.
-    *   Look for any fields that require your specific information, such as an API endpoint, API key, or user token. Update these as necessary. The shortcut should have comments or placeholder text indicating what needs to be changed.
+    *   Look for 4 "Get contents of" fields that require your specific information
+        *   Click the expand button
+        *    Replace the API endpoint (https://your-instant-bookmark-url/api/ingest)
+        *    Replace the API key (X-API-Key value)
 
 ## How to Use
 
-See the main [README.md](../../README.md) for the demo use case. You can invoke this shortcut from the photo, the screenshot, or the web browser.
+See the main [README.md](../../README.md) for the demo use case. You can invoke this shortcut from the photo album, the screenshot, or the web browser.
 
 ## Privacy
 Check Apple
