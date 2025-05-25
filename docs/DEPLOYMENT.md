@@ -35,7 +35,7 @@
      ```ini
      VITE_API_ACCESS_KEY # the same as API_ACCESS_KEY, this ensures the Front End webpage can connect to the Back End API
      ```
-    - Here's the reference for Cloudflare configuration.
+    - Here's the reference for Cloudflare configuration:
 ![cloudflare-config](./cloudflare-configuration.png) 
 
 4. **Force Rebuild**
