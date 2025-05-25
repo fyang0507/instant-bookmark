@@ -13,6 +13,10 @@
   <img src="https://img.shields.io/github/license/fyang0507/instant-bookmark?color=green" alt="License" />
   <!-- Cloudflare Workers -->
   <img src="https://img.shields.io/badge/Deployed%20on-Cloudflare%20Workers-orange?logo=cloudflare" alt="Deployed on Cloudflare Workers" />
+  <!-- iOS Shortcuts -->
+  <img src="https://img.shields.io/badge/iOS%20Shortcuts-000000?logo=apple" alt="iOS Shortcuts" />
+  <!-- Raycast -->
+  <img src="https://img.shields.io/badge/Raycast-FF6363?logo=raycast" alt="Raycast" />
 </p>
 
 
@@ -30,12 +34,12 @@ Instant Bookmark is a service to quickly save URLs and screenshots to Notion, wi
 *   **Backend**: Cloudflare Workers (TypeScript)
 *   **Browser Automation**: Browserless (for tasks requiring a headless browser, like advanced URL processing or screenshot)
 *   **Primary Integration**: Notion API
-*   **Planned Client Integrations**: iOS Shortcuts, Raycast
+*   **Client Integrations**: iOS Shortcuts, Raycast
 
 ## Key Features
 
-*   Save URLs or screenshots to Notion.
-*   Summarize URLs/screenshot using cost-effective 4.1-nano.
+*   Save URLs or screenshots to Notion from anywhere: using the gateway url, iOS shortcut, or use Raycast Extension.
+*   Optionally auto summarize URLs/screenshot using cost-effective GPT-4.1-nano.
 *   Secure API for client communication.
 *   Free, Easy deployment via Cloudflare Workers and Browserless.
 
@@ -45,14 +49,14 @@ Instant Bookmark is a service to quickly save URLs and screenshots to Notion, wi
 
 *   Node.js and npm (or yarn)
 *   Wrangler CLI: `npm install -g wrangler` (or `yarn global add wrangler`)
-*   A Notion account and an integration token.
+*   A Notion account and an integration token (requested from [Notion dev portal](https://developers.notion.com/)).
 *   A Notion database set up for bookmarks.
 
 ### Local Development Setup
 
 1.  **Clone the repository:**
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/fyang0507/instant-bookmark.git
     cd instant-bookmark
     ```
 
@@ -91,18 +95,56 @@ Instant Bookmark is a service to quickly save URLs and screenshots to Notion, wi
 
 All backend Cloudflare Worker functions (under `functions/api/`) expect an `API_ACCESS_KEY` to be sent in the `X-API-Key` request header. The backend validates this key against the `API_ACCESS_KEY` secret defined in its environment. Requests with missing or invalid keys will be rejected.
 
+You can generate a secure API key for your application using OpenSSL: `openssl rand -hex 32`
+
+
+## Deployment to Cloudflare Workers
+
+1. **Prepare Your Repository**:
+   - Ensure your code is pushed to a GitHub repository
+   - Verify your `package.json` has the correct build script and dependencies
+
+2. **Deploy via Cloudflare Workers**:
+   - Go to [Cloudflare Dashboard](https://dash.cloudflare.com)
+   - Navigate to "Workers & Pages" in the sidebar
+   - Click "Create application"
+   - Select "Create Worker"
+   - Choose "Deploy from GitHub"
+   - Select your repository
+   - Configure build settings:
+     - Build command: `npm run build`
+     - Deploy command: `npx wrangler deploy`
+     - Path: `/`
+
+3. **Configure Environment Variables**:
+   - In your Worker's dashboard
+   - Go to "Settings" > "Variables"
+   - Add the following variables:
+     ```
+     NOTION_API_KEY
+     NOTION_DATABASE_ID
+     API_ACCESS_KEY
+     OPENAI_API_KEY
+     BROWSERLESS_TOKEN
+     ```
+   - Click "Save"
+
+4. **Verify Deployment**:
+   - Check the deployment status in the Workers dashboard
+   - Test all API endpoints with your API key
+   - Verify Notion integration is working
+   - Test URL processing and screenshot functionality
+
+Here's the reference for Cloudflare configuration.
+![cloudflare-config](public/cloudflare-configuration.png)
+
+
 ## Backend API Endpoints
 
-*   **`/api/save-to-notion`**: Accepts bookmark data (URL, title, summary, thoughts, etc.) and saves it to the configured Notion database.
-*   **`/api/process-url`**: Accepts a URL, fetches metadata, use AI to extracts main content, and returns the extracted title and content.
-*   **`/api/process-screenshot`**: Accepts an image file, processes it (AI vision model), and returns extracted title and content.
-
-## Future Integrations
-
-The goal is to make Instant Bookmark accessible from various platforms for quick and seamless bookmarking.
-
-* iOS Shortcut
-* Raycast Extension
+*   **`/api/ingest`**: Main entry point that accepts both URL and image data. For URLs, it fetches content and generates summaries using AI. For images, it processes screenshots using AI vision models. Supports both auto-generated and manual titles/summaries.
+*   **`/api/process-url`**: Internal endpoint that accepts a URL, uses Browserless.io to extract content, and returns AI-generated title and summary.
+*   **`/api/process-screenshot`**: Internal endpoint that accepts an image file, uploads it to Notion, processes it with AI vision, and returns the title, summary, and Notion upload ID.
+*   **`/api/save-to-notion`**: Internal endpoint that accepts processed data (title, summary, source type, URL/upload ID) and saves it to the configured Notion database.
 
 ## Technical Notes
 
@@ -113,15 +155,5 @@ An attempt was made to use `playwright-mcp` for advanced browser automation task
 *   **Reason**: Cloudflare Workers have a restricted runtime environment that does not allow the spawning of child processes (`child_process.spawn`), which is a capability `playwright-mcp` relies on to control a browser instance. This limitation is in place for security and resource management reasons within the serverless environment.
 *   **Alternative**: To handle browser automation tasks like rendering JavaScript-heavy sites or backend screenshots, this project uses [Browserless.io](https://www.browserless.io/). Cloudflare Workers call the Browserless API, leveraging its remote headless browsers (free tier available) for complex URL processing and screenshot. This bypasses Worker limitations while still enabling full browser capabilities when needed. Simpler content fetching uses standard `fetch`. Clients can also directly upload screenshots.
 
-## Project Structure
-
-*   **`src/`**: Frontend React application (Vite, TypeScript, Tailwind CSS).
-    *   `src/components/`: Reusable UI components.
-    *   `src/pages/`: Page components.
-    *   `src/services/`: API call modules.
-*   **`functions/`**: Backend Cloudflare Worker functions (TypeScript).
-    *   `functions/api/`: API endpoint implementations.
-*   **`public/`**: Static assets for the frontend.
-
-## Completely Vibe-coded
-This project is made possibly thanks to [bolt](https://bolt.new/) and [cursor](https://www.cursor.com/).
+## Completely vibe coded
+This project is made possible thanks to [bolt](https://bolt.new/) for the prototype on FE and [cursor](https://www.cursor.com/) for the BE.
