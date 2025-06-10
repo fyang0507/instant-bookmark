@@ -98,5 +98,13 @@ An attempt was made to use `playwright-mcp` for advanced browser automation task
 *   **Reason**: Cloudflare Workers have a restricted runtime environment that does not allow the spawning of child processes (`child_process.spawn`), which is a capability `playwright-mcp` relies on to control a browser instance. This limitation is in place for security and resource management reasons within the serverless environment.
 *   **Alternative**: To handle browser automation tasks like rendering JavaScript-heavy sites or backend screenshots, this project uses [Browserless.io](https://www.browserless.io/). Cloudflare Workers call the Browserless API, leveraging its remote headless browsers (free tier available) for complex URL processing and screenshot. This bypasses Worker limitations while still enabling full browser capabilities when needed. Simpler content fetching uses standard `fetch`. Clients can also directly upload screenshots.
 
+### OpenAI-Compatible Providers
+
+This project supports OpenAI-compatible API providers, making it easier to use alternative services when the official OpenAI API is not accessible or when you prefer other providers. You can configure a custom base URL using the `OPENAI_BASE_URL` environment variable.
+
+*   **Default**: Uses the official OpenAI API (`https://api.openai.com/v1`)
+*   **Custom providers**: Set `OPENAI_BASE_URL` to your preferred OpenAI-compatible API endpoint
+*   **Popular alternatives**: Azure OpenAI, OpenRouter, local deployments with vLLM/Ollama, etc.
+
 ## Completely vibe coded
 This project is made possible thanks to [bolt](https://bolt.new/) for the prototype on FE and [cursor](https://www.cursor.com/) for the BE.

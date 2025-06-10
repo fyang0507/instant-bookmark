@@ -20,6 +20,7 @@
         NOTION_DATABASE_ID=your_notion_database_id # see this guide to retrieve the ID: https://developers.notion.com/reference/retrieve-a-database
         API_ACCESS_KEY=your_secure_local_api_key_for_backend # generate this yourself, e.g. you can use `openssl rand -hex 32`
         OPENAI_API_KEY=your_openai_api_key # requested from https://platform.openai.com/
+        OPENAI_BASE_URL=https://api.openai.com/v1 # (optional) base URL for OpenAI-compatible providers, defaults to official OpenAI
         BROWSERLESS_TOKEN=your_browserless_token # sign up on https://www.browserless.io/ to get the token
         ```
 

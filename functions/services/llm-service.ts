@@ -34,6 +34,7 @@ export async function generateContentForScreenshot(
 
     const openai = new OpenAI({
       apiKey: env.OPENAI_API_KEY,
+      baseURL: env.OPENAI_BASE_URL,
     });
 
     const chatCompletion = await openai.chat.completions.create({
@@ -134,6 +135,7 @@ export async function generateTitleAndSummaryForText(
     console.log('[llm-service] Generating title and summary for text content using OpenAI gpt-4o-mini.');
     const openai = new OpenAI({
       apiKey: env.OPENAI_API_KEY,
+      baseURL: env.OPENAI_BASE_URL,
     });
 
     const chatCompletion = await openai.chat.completions.create({
