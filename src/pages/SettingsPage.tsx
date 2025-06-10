@@ -69,7 +69,7 @@ const SettingsPage: React.FC = () => {
               Instant Bookmark helps you save and organize content from around the web. Created with ❤️ by <a href="https://github.com/fyang0507" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">Fred Yang</a>.
             </p>
             <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-              Version 0.2.1
+              Version 0.2.2
             </p>
           </CardContent>
         </Card>
